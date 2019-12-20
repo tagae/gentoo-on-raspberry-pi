@@ -1,0 +1,10 @@
+[Match]
+
+Name=en*
+
+[Network]
+
+DHCP=yes
+
+# If you use a firewall, make sure to open UDP port 5353
+MulticastDNS=yes

@@ -1,0 +1,5 @@
+label: dos
+unit: sectors
+
+size=+128m, type=c, bootable
+type=83

@@ -1,0 +1,4 @@
+# https://wiki.gentoo.org/wiki/Raspberry_Pi#crossdev
+# https://github.com/sakaki-/gentoo-on-rpi-64bit/wiki/Set-Up-Your-Gentoo-PC-for-Cross-Compilation-with-crossdev
+
+cross-aarch64-unknown-linux-gnu/gcc cxx multilib fortran -mudflap nls openmp -sanitize -vtv
