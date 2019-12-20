@@ -1,0 +1,9 @@
+# https://wiki.gentoo.org/wiki/QEMU
+
+app-emulation/qemu static-user -vnc -png -jpeg -curl -gtk -ncurses -opengl -pulseaudio -alsa -sdl -oss QEMU_SOFTMMU_TARGETS: aarch64 QEMU_USER_TARGETS: aarch64
+
+dev-libs/libpcre static-libs
+dev-libs/glib static-libs
+sys-libs/zlib2 static-libs
+sys-apps/attr static-libs
+sys-libs/zlib static-libs

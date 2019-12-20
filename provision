@@ -1,0 +1,50 @@
+#!/bin/bash -eu
+
+readonly SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+
+source "$SCRIPT_DIR"/lib/provision.sh
+
+usage() {
+    die <<EOM
+Usage: $SCRIPT_NAME [OPTION]...
+
+Provisions the host with the tools needed build and install Gentoo on a
+Raspberry Pi 4.
+
+Options:
+
+  -h   print this help message
+
+EOM
+}
+
+while getopts :hy OPTION; do
+    case $OPTION in
+        h) usage ;;
+        \?) usage ;;
+    esac
+done
+shift $((OPTIND-1))
+
+(( $# == 0 )) || usage
+
+is-gentoo / || die "Host is not Gentoo"
+
+cd "$SCRIPT_DIR"
+
+echo
+echo '---===[ Provisioning ]===---'
+echo System: $(uname -a)
+echo
+
+sync-portage-tree
+set-portage-profile
+install-builder-packages
+crossdev-unneeded || setup-crossdev
+
+${QUIET:-false} || cat <<EOM
+
+The system is ready to be used as build environment.
+
+EOM

@@ -1,0 +1,74 @@
+#!/bin/bash -eu
+
+readonly SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+
+source "$SCRIPT_DIR"/lib/package.sh
+source "$SCRIPT_DIR"/lib/boot.sh
+
+usage() {
+    die <<EOM
+Usage: $SCRIPT_NAME <MEDIA>
+
+Boots the given MEDIA and shuts it down.
+EOM
+}
+
+(( $# == 1 )) || usage
+
+cd "$SCRIPT_DIR"
+
+source profiles/"$PROFILE"/config.sh
+
+readonly MEDIA="$1"
+
+boot-instance() {
+    prepare-boot
+    ./boot "$MEDIA" &
+    wait-for-instance
+    CLEANUPS+=(shutdown-instance)
+}
+
+wait-for-instance() {
+    local -i attempts=0
+    echo
+    while ! remote true; do
+        if (( ++attempts == 1 )); then echo -n 'Waiting for host to be up'; fi
+        if (( attempts == 15 )); then die 'failed to connect to instance'; fi
+        echo -n .
+        sleep 2
+    done
+    echo
+}
+
+shutdown-instance() {
+    remote poweroff
+    wait
+    shutdown-instance() { true; } # redefine function as no-op
+}
+
+remote() {
+    ssh -q -n -i install.d/ssh/$MACHINE \
+        -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+        -p 2222 root@localhost "$@"
+}
+
+show-system-info() {
+    # Besides displaying system information, this checks
+    # that a few basic commands run without error.
+    echo
+    echo '---===[ System Info ]===---'
+    remote uname -a
+    remote emerge --info
+    echo
+}
+
+parse-media-name
+
+boot-instance
+show-system-info
+shutdown-instance
+
+echo
+echo Image $MEDIA tested successfully.
+echo

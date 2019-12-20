@@ -1,0 +1,82 @@
+#!/bin/bash -eu
+
+readonly SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+
+source "$SCRIPT_DIR"/lib/common.sh
+source "$SCRIPT_DIR"/lib/install.sh
+
+usage() {
+    die <<EOM
+Usage: $SCRIPT_NAME [OPTION]... MACHINE PROFILE DEVICE
+
+Installs a Gentoo system on the given DEVICE.
+The system will have MACHINE as default hostname.
+The system is built with settings from the profiles/\$PROFILE directory.
+
+Options:
+
+  -h    print this help message
+  -w    wipe DEVICE before installing
+  -q    log messages in scripting mode
+  -m    configure kernel before building
+
+Environment variables:
+
+  WIPE          same as -w
+  QUIET         same as -q
+  MENUCONFIG    same as -m
+  PASSWORD      set root password to $PASSWORD
+
+For further environment variables that can customize the installation process,
+see '$(realpath --relative-to="$(pwd)" $SCRIPT_DIR)/bootstrap -h'.
+
+Sample invocation:
+
+  sudo -E $0 gentoo rpi4 /dev/mmcblk0
+
+EOM
+}
+
+while getopts :hwqm OPTION; do
+    case $OPTION in
+        h) usage ;;
+        w) WIPE=true ;;
+        q) QUIET=true ;;
+        m) MENUCONFIG=true ;;
+        \?) usage ;;
+    esac
+done
+shift $((OPTIND-1))
+
+(( $# == 3 )) || usage
+
+cd "$SCRIPT_DIR"
+
+readonly MACHINE="$1"
+readonly PROFILE="$2"
+readonly DEVICE="$3"
+
+[ -n "$MACHINE" ] || die 'please specify a non-empty machine name'
+[ -f "profiles/$PROFILE/config.sh" ] || die "unsupported profile '$PROFILE'"
+[ -b "$DEVICE" ] || die "'$DEVICE' is not a block device"
+
+source profiles/"$PROFILE"/config.sh
+
+readonly BOOT=$(make-temp-dir)
+readonly BASE=$(make-temp-dir)
+readonly ROOT="$BASE/root"
+
+install
+
+echo
+
+${QUIET:-false} || cat <<EOM
+Gentoo has been installed on $DEVICE.
+
+Once booted, you can access the system with
+
+     ssh root@$MACHINE.local
+
+For proper resolution of the .local domain, your system must support Multicast DNS.
+EOM

@@ -1,0 +1,22 @@
+name: test
+
+on: [push]
+
+jobs:
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Setup aarch64 emulation
+      run: sudo apt-get install -y qemu-user-binfmt
+
+    - name: Provision builder
+      run: sudo ./builder ./provision
+
+    - name: Build image
+      run: sudo ./builder ./package gentoo.rpi4.img
+
+    - name: Test image
+      run: sudo ./builder ./test gentoo.rpi4.img

@@ -1,0 +1,62 @@
+#!/bin/bash -eu
+
+readonly SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+readonly PROJECT_NAME="$(basename "$SCRIPT_DIR")"
+
+source "$SCRIPT_DIR"/lib/bootstrap.sh
+
+usage() {
+    die <<EOM
+Usage: $SCRIPT_NAME [OPTION]... ROOT
+
+Bootstraps a Gentoo system on the given ROOT directory.
+
+Options:
+
+  -h         print this help message
+  -w         wipe the root filesystem before bootstrapping
+  -q         log messages in scripting mode
+  -u <url>   URL of the stage 3 tarball to use; defaults to the latest available
+
+Environment variables:
+
+  WIPE           same as -w
+  QUIET          same as -q
+  STAGE3_URL     same as -u \$STAGE3_URL
+
+Sample invocation:
+
+  sudo $0 -w /var/lib/machines/$PROJECT_NAME
+
+EOM
+}
+
+while getopts :hu:wq OPTION; do
+    case $OPTION in
+        h) usage ;;
+        u) STAGE3_URL="$OPTARG" ;;
+        w) WIPE=true ;;
+        q) QUIET=true ;;
+        \?) usage ;;
+    esac
+done
+shift $((OPTIND-1))
+
+(( $# == 1 )) || usage
+
+readonly ROOT="$1"
+
+test -n "$ROOT" || die 'please specify a non-empty root path'
+
+cd "$SCRIPT_DIR"
+
+bootstrap
+
+${QUIET:-false} || cat <<EOM
+
+You can inspect the bootstrapped environment with
+
+    sudo systemd-nspawn --directory=${ROOT@Q}
+
+EOM
