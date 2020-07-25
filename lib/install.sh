@@ -144,6 +144,7 @@ install-boot-config() {
         rootflags=subvol=/root
         rootwait
         init=/usr/lib/systemd/systemd
+        systemd.gpt_auto=no
     )
     local -r config=(
         enable_uart=1
