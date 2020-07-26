@@ -30,13 +30,13 @@ This projects builds and installs Gentoo using Gentoo as build environment.
 If your host runs Gentoo, you can use it as build environment by provisioning
 your system with the needed tools through the `provision` command:
 
-    sudo ./provision
+    sudo ./provision builder crossdev
 
 If your host system is not Gentoo (or even if it is but you prefer to keep your
 system untouched), you can run all commands in a `chroot`-ed Gentoo environment
 through the `builder` command.  So the previous command becomes instead:
 
-    sudo ./builder ./provision
+    sudo ./builder ./provision builder crossdev
 
 The `builder` command creates a `builder.img` image containing a Gentoo build
 environment. You can remove the image once no longer needed.
@@ -55,7 +55,7 @@ take care of cross-compiling the needed resources.
 The parameters needed for installation are the following:
 
     export MACHINE=gentoo  # hostname of the installed system
-    export PROFILE=rpi4    # only currently supported profile
+    export PROFILE=rpi4    # Raspberry Pi 4
 
 If installing directly to a Micro SD card, you also need
 
