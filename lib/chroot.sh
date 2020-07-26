@@ -1,6 +1,6 @@
-test -v SYSTEM_LIB && return || readonly SYSTEM_LIB="$(realpath "$BASH_SOURCE")"
+test -v CHROOT_LIB && return || readonly CHROOT_LIB="$(realpath "$BASH_SOURCE")"
 
-: ${LIB_DIR:="$(dirname "$SYSTEM_LIB")"}
+: ${LIB_DIR:="$(dirname "$CHROOT_LIB")"}
 
 bind-system-dirs() {
     mount -v --types proc /proc $ROOT/proc

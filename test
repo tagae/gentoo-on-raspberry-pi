@@ -4,7 +4,6 @@ readonly SCRIPT_NAME="$(basename "$0")"
 readonly SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 
 source "$SCRIPT_DIR"/lib/package.sh
-source "$SCRIPT_DIR"/lib/boot.sh
 
 usage() {
     die <<EOM
@@ -16,14 +15,9 @@ EOM
 
 (( $# == 1 )) || usage
 
-cd "$SCRIPT_DIR"
-
-source profiles/"$PROFILE"/config.sh
-
 readonly MEDIA="$1"
 
 boot-instance() {
-    prepare-boot
     ./boot "$MEDIA" &
     wait-for-instance
     CLEANUPS+=(shutdown-instance)
@@ -42,9 +36,9 @@ wait-for-instance() {
 }
 
 shutdown-instance() {
-    remote poweroff
+    remote systemctl poweroff
     wait
-    shutdown-instance() { true; } # redefine function as no-op
+    shutdown-instance() { true; } # redefine this function as a no-op
 }
 
 remote() {
@@ -63,8 +57,9 @@ show-system-info() {
     echo
 }
 
-parse-media-name
+cd "$SCRIPT_DIR"
 
+parse-media-name
 boot-instance
 show-system-info
 shutdown-instance

@@ -4,6 +4,7 @@ readonly SCRIPT_NAME="$(basename "$0")"
 readonly SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 
 source "$SCRIPT_DIR"/lib/boot.sh
+source "$SCRIPT_DIR"/lib/package.sh
 
 usage() {
     die <<EOM
@@ -15,6 +16,7 @@ MEDIA can be generated with the 'package' command.
 Options:
 
   -h   print this help message
+  -d   run as daemon in the background
 
 Environment variables:
 
@@ -23,9 +25,10 @@ Environment variables:
 EOM
 }
 
-while getopts :h OPTION; do
+while getopts :hd OPTION; do
     case $OPTION in
         h) usage ;;
+        d) DAEMON=true ;;
         \?) usage ;;
     esac
 done
@@ -35,12 +38,12 @@ shift $((OPTIND-1))
 
 readonly MEDIA="$1"
 
-parse-media-name
+test -f "$MEDIA" || die "File not found: $MEDIA"
 
-source profiles/"$PROFILE"/config.sh
+parse-media-name
+[ -f profiles/"$PROFILE".sh ] || die "unsupported profile '$PROFILE'"
+source profiles/"$PROFILE".sh
 
 cd "$SCRIPT_DIR"
-
-test -f "$MEDIA" || die "File not found: $MEDIA"
 
 boot

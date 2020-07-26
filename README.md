@@ -55,7 +55,7 @@ take care of cross-compiling the needed resources.
 The parameters needed for installation are the following:
 
     export MACHINE=gentoo  # hostname of the installed system
-    export PROFILE=rpi4    # only currently supported profile
+    export PROFILE=rpi4    # Raspberry Pi 4
 
 If installing directly to a Micro SD card, you also need
 

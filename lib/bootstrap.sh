@@ -5,10 +5,11 @@ test -v BOOTSTRAP_LIB && return || readonly BOOTSTRAP_LIB="$(realpath "$BASH_SOU
 : ${QUIET:=false}
 : ${WIPE:=false}
 
-source "$LIB_DIR"/ui.sh
-source "$LIB_DIR"/common.sh
+source "$LIB_DIR"/runtime.sh
+source "$LIB_DIR"/file.sh
 source "$LIB_DIR"/btrfs.sh
 source "$LIB_DIR"/gentoo.sh
+source "$LIB_DIR"/ui.sh
 
 bootstrap() {
     if $WIPE && [ -f "$ROOT"/etc/os-release ]; then
@@ -52,7 +53,7 @@ fetch-stage3() {
         local file="$STAGE3_ARCHIVE$suffix" remote="$STAGE3_URL$suffix"
         if ! test -f $file; then
             if curl --silent --head --fail --output /dev/null "$remote"; then
-                curl ${QUIET:+--silent --show-error} --fail --remote-name "$remote"
+                curl --fail --remote-name "$remote"
             fi
         fi
     done

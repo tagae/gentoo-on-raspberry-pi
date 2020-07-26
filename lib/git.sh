@@ -9,6 +9,6 @@ update-repo-if-older-than() {
         git -C $REPO remote -v
         git -C $REPO reset --hard origin/$BRANCH
         git -C $REPO clean -fdx # remove files that are no longer tracked
-        touch .
+        touch $REPO
     fi
 }
