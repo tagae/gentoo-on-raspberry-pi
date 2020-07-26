@@ -4,8 +4,8 @@ test -v KERNEL_LIB && return || readonly KERNEL_LIB="$(realpath "$BASH_SOURCE")"
 
 : ${KERNEL_SRC:=install.d/linux}
 : ${FIRMWARE_SRC:=install.d/firmware}
-: ${PROFILE:=virt}
 
+source "$LIB_DIR"/runtime.sh
 source "$LIB_DIR"/git.sh
 source "$LIB_DIR"/ui.sh
 
@@ -27,7 +27,7 @@ fetch-kernel() {
         update-repo-if-older-than $KERNEL_SRC '1 day'
     else
         # use default repo branch
-        git clone --branch rpi-5.7.y --depth 1 https://github.com/raspberrypi/linux $KERNEL_SRC
+        git clone --branch $KERNEL_BRANCH --depth 1 $KERNEL_REPO $KERNEL_SRC
     fi
 }
 
@@ -38,14 +38,41 @@ build-kernel() {
 }
 
 config-kernel() {
+    [ ! -e $KERNEL_SRC/.config ] || [ ! -v MENUCONFIG ] || return  0
     milestone
-    cp -uv profiles/"$PROFILE"/linux.config $KERNEL_SRC/.config
+    move-kernel-config-out
+    if [ -n "${FACETS:-}" ]; then
+        apply-kernel-config install.d/facets $FACETS
+    else
+        cross-make ${PLATFORM}_defconfig
+    fi
     if [ -v MACHINE ]; then
         set-kernel-config DEFAULT_HOSTNAME "$MACHINE"
     fi
     if [ -v PROFILE ]; then
         set-kernel-config LOCALVERSION "-$PROFILE"
     fi
+}
+
+move-kernel-config-out() {
+    [ -e $KERNEL_SRC/.config ] || return 0
+    local -i i=0
+    while [ -e $KERNEL_SRC/.config.$(( i++ )) ]; do continue; done
+    mv -v $KERNEL_SRC/.config $KERNEL_SRC/.config.$i
+}
+
+apply-kernel-config() {
+    local CONFIG_DIR="$1" CONFIG_NAME CONFIG_FILE
+    while (( $# > 0 )); do
+        CONFIG_NAME="$1"
+        shift
+        CONFIG_FILE=$CONFIG_DIR/$CONFIG_NAME.linux.config
+        if [ -e $CONFIG_FILE ]; then
+            echo applying facet $CONFIG_NAME
+            cat $CONFIG_FILE >> $KERNEL_SRC/.config
+        fi
+    done
+    cross-make oldconfig
 }
 
 set-kernel-config() {
@@ -55,10 +82,7 @@ set-kernel-config() {
 
 make-kernel() {
     milestone "$@"
-    cross-make \
-        ${DEFAULTCONFIG:+${PLATFORM:-}${PLATFORM:+_}defconfig} \
-        ${MENUCONFIG:+menuconfig} \
-        "$@"
+    cross-make ${MENUCONFIG:+menuconfig} "$@"
 }
 
 cross-make() {

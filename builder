@@ -29,6 +29,8 @@ readonly ROOT=$BASE/root
 readonly BUILDER_HOME=/root
 readonly BUILDER_DIR=$BUILDER_HOME/$PROJECT_NAME
 
+export FACETS='base'
+
 cd "$SCRIPT_DIR"
 
 create-builder-media

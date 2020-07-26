@@ -12,7 +12,7 @@ Usage:
    $SCRIPT_NAME [OPTION]... MACHINE.PROFILE.img
 
 Builds an Gentoo image for a host named MACHINE using settings from
-profiles/PROFILE and storing the result the MEDIA file.
+profiles/PROFILE.* and storing the result the MEDIA file.
 
 The second form uses the MEDIA filename as template for the needed parameters.
 
@@ -61,6 +61,7 @@ fi
 [ -n "$MACHINE" ] || die "MACHINE parameter cannot be empty"
 [ -n "$PROFILE" ] || die "PROFILE parameter cannot be empty"
 [ -n "$MEDIA" ] || die "MEDIA parameter cannot be empty"
+[ -f profiles/"$PROFILE".sh ] || die "unsupported profile '$PROFILE'"
 
 cd "$(dirname "$0")"
 

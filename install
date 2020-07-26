@@ -3,7 +3,6 @@
 readonly SCRIPT_NAME="$(basename "$0")"
 readonly SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 
-source "$SCRIPT_DIR"/lib/common.sh
 source "$SCRIPT_DIR"/lib/install.sh
 
 usage() {
@@ -12,7 +11,7 @@ Usage: $SCRIPT_NAME [OPTION]... MACHINE PROFILE DEVICE
 
 Installs a Gentoo system on the given DEVICE.
 The system will have MACHINE as default hostname.
-The system is built with settings from the profiles/\$PROFILE directory.
+The system is built with settings from the profiles/\$PROFILE.* files.
 
 Options:
 
@@ -51,27 +50,23 @@ shift $((OPTIND-1))
 
 (( $# == 3 )) || usage
 
-cd "$SCRIPT_DIR"
-
 readonly MACHINE="$1"
 readonly PROFILE="$2"
 readonly DEVICE="$3"
 
 [ -n "$MACHINE" ] || die 'please specify a non-empty machine name'
-[ -f "profiles/$PROFILE/config.sh" ] || die "unsupported profile '$PROFILE'"
+[ -n "$PROFILE" ] || die 'please specify a non-empty profile'
 [ -b "$DEVICE" ] || die "'$DEVICE' is not a block device"
+[ -f profiles/"$PROFILE".sh ] || die "unsupported profile '$PROFILE'"
 
-source profiles/"$PROFILE"/config.sh
+source profiles/"$PROFILE".sh
 
-readonly BOOT=$(make-temp-dir)
-readonly BASE=$(make-temp-dir)
-readonly ROOT="$BASE/root"
+cd "$SCRIPT_DIR"
 
 install
 
-echo
-
 ${QUIET:-false} || cat <<EOM
+
 Gentoo has been installed on $DEVICE.
 
 Once booted, you can access the system with
@@ -79,4 +74,5 @@ Once booted, you can access the system with
      ssh root@$MACHINE.local
 
 For proper resolution of the .local domain, your system must support Multicast DNS.
+
 EOM

@@ -5,7 +5,7 @@ test -v PACKAGE_LIB && return || readonly PACKAGE_LIB="$(realpath "$BASH_SOURCE"
 : ${QUIET:=false}
 : ${WIPE:=false}
 
-source "$LIB_DIR"/common.sh
+source "$LIB_DIR"/mount.sh
 source "$LIB_DIR"/install.sh
 
 package() {
@@ -37,7 +37,10 @@ detach-device() {
 create-media() {
     test -f "$MEDIA" && return 0
     milestone $MEDIA
-    fallocate -v --length "${MEDIA_SIZE:-4g}" "$MEDIA"
+    if ! fallocate -v --length "${MEDIA_SIZE:-4g}" "$MEDIA"; then
+        rm -f "$MEDIA"
+        false
+    fi
 }
 
 mount-media() {

@@ -11,20 +11,26 @@ test -v INSTALL_LIB && return || readonly INSTALL_LIB="$(realpath "$BASH_SOURCE"
 : ${ROOT_MOUNT_OPTS:="subvol=/root,compress=zstd,noatime"}
 : ${BOOT_MOUNT_OPTS:="noauto,noatime"}
 
+source "$LIB_DIR"/runtime.sh
+source "$LIB_DIR"/mount.sh
+source "$LIB_DIR"/file.sh
+source "$LIB_DIR"/chroot.sh
+source "$LIB_DIR"/gentoo.sh
 source "$LIB_DIR"/crossdev.sh
 source "$LIB_DIR"/kernel.sh
 source "$LIB_DIR"/ui.sh
 
 install() {
+    source-from install.d/facets base ${FACETS:-}
     partition-media
     create-file-systems
-    mount-partitions
     install-root
     install-boot
 }
 
 partition-media() {
     if $WIPE || ! find-partitions; then
+        milestone
         sfdisk --wipe=always --wipe-partition=always "$DEVICE" < install.d/partitions.sfdisk
         sync
         WIPE=true # force creation of new file systems
@@ -38,7 +44,6 @@ find-partitions() {
         BOOT_DEVICE="${devices[1]}"
         BASE_DEVICE="${devices[2]}"
     else
-        echo "Expected 2 partitions, but found ${devices[@]}"
         false
     fi
 }
@@ -46,17 +51,16 @@ find-partitions() {
 create-file-systems() {
     find-partitions
     if $WIPE; then
-        mkfs.fat -c -f 1 -F 32 -n boot -v "$BOOT_DEVICE"
-        mkfs.btrfs -L base "$BASE_DEVICE"
+        milestone
+        ( set -x; mkfs.fat -c -f 1 -F 32 -n boot -v "$BOOT_DEVICE"; )
+        echo
+        ( set -x; mkfs.btrfs -L base "$BASE_DEVICE"; )
     fi
 }
 
-mount-partitions() {
-    mount-dir "$BASE_DEVICE" "$BASE" "$BASE_MOUNT_OPTS"
-    mount-dir "$BOOT_DEVICE" "$BOOT" "$BOOT_MOUNT_OPTS"
-}
-
 install-root() {
+    mount-base-device
+    ROOT="$BASE/root"
     bootstrap-root
     crossdev-unneeded || enable-emulation
     config-fstab
@@ -65,6 +69,11 @@ install-root() {
     config-networking
     config-ssh-access
     set-root-password
+}
+
+mount-base-device() {
+    BASE=$(make-temp-dir)
+    mount-dir "$BASE_DEVICE" "$BASE" "$BASE_MOUNT_OPTS"
 }
 
 bootstrap-root() {
@@ -99,7 +108,8 @@ config-etc() {
 }
 
 config-journal() {
-    chattr -V +C /var/log/journal/
+    milestone
+    chattr -V +C "$ROOT"/var/log/journal/
 }
 
 config-networking() {
@@ -131,14 +141,19 @@ set-root-password() {
 }
 
 install-boot() {
+    mount-boot-device
     install-kernel
     install-boot-config
 }
 
+mount-boot-device() {
+    BOOT=$(make-temp-dir)
+    mount-dir "$BOOT_DEVICE" "$BOOT" "$BOOT_MOUNT_OPTS"
+}
+
 install-boot-config() {
     milestone
-    local -r cmdline=(
-        console=ttyS0,115200
+    CMDLINE+=(
         root=PARTUUID="$(blkid -s PARTUUID -o value $BASE_DEVICE)"
         rootfstype=btrfs
         rootflags=subvol=/root
@@ -146,12 +161,13 @@ install-boot-config() {
         init=/usr/lib/systemd/systemd
         systemd.gpt_auto=no
     )
-    local -r config=(
+    local -r CONFIG=(
         enable_uart=1
     )
-    echo cmdline.txt:
-    echo "${cmdline[@]}" | tee $BOOT/cmdline.txt
+    echo '# cmdline.txt'
+    tee $BOOT/cmdline.txt <<<"${CMDLINE[*]}"
     echo
-    echo config.txt:
-    echo "${config[@]}" | tee $BOOT/config.txt
+    echo '# config.txt'
+    tee $BOOT/config.txt <<<"${CONFIG[*]}"
+    echo
 }
