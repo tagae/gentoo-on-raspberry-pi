@@ -28,19 +28,19 @@ install-stage3() {
 
 find-latest-stage3() {
     cd bootstrap.d
-    local -A machine_platforms=( [x86_64]=amd64 )
-    local -r machine=$(uname -m)
+    local -A machine_platforms=( [x86_64]=amd64 [arm64]=arm64 )
+    local -r machine=${ARCH:-$(uname -m)}
     [ -v machine_platforms[$machine] ] || die "Unsupported platform: $machine"
     local -r platform=${machine_platforms[$machine]}
-    local -r stampfile=latest-stage3-"$platform"-systemd.txt
-    local -r distfiles_url=http://distfiles.gentoo.org/releases/"$platform"/autobuilds
+    local -r stampfile=latest-stage3-$platform-systemd.txt
+    local -r distfiles_url=http://distfiles.gentoo.org/releases/$platform/autobuilds
 
-    if older-than "$stampfile" '15 days'; then
-        curl ${QUIET:+--silent --show-error} --fail --remote-name "$distfiles_url/$stampfile"
+    if older-than $stampfile '15 days'; then
+        curl ${QUIET:+--silent --show-error} --fail --remote-name $distfiles_url/$stampfile
     fi
 
     local stage3_archive_path stage3_size
-    read stage3_archive_path stage3_size <<< $(grep -v '^#' "$stampfile")
+    read stage3_archive_path stage3_size <<< $(grep -v '^#' $stampfile)
 
     STAGE3_URL="$distfiles_url/$stage3_archive_path"
     cd - > /dev/null
@@ -53,7 +53,7 @@ fetch-stage3() {
         local file="$STAGE3_ARCHIVE$suffix" remote="$STAGE3_URL$suffix"
         if ! test -f $file; then
             if curl --silent --head --fail --output /dev/null "$remote"; then
-                curl ${QUIET:+--silent --show-error} --fail --remote-name "$remote"
+                curl --fail --remote-name "$remote"
             fi
         fi
     done
@@ -75,5 +75,7 @@ check-download-integrity() {
 
 extract-stage3() {
     milestone
-    tar xpf bootstrap.d/$STAGE3_ARCHIVE --xattrs-include='*.*' --numeric-owner -C "$ROOT"
+    if ! [ -e "$ROOT"/etc/os-release ]; then
+        tar xpf bootstrap.d/$STAGE3_ARCHIVE --xattrs-include='*.*' --numeric-owner -C "$ROOT"
+    fi
 }

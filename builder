@@ -12,14 +12,26 @@ Usage: $SCRIPT_NAME COMMAND [ARGS]...
 
 Executes the given COMMAND in a builder chroot(1).
 
+Options:
+
+  -h          print this help message
+
 Sample invocation:
 
-  sudo $0 ./provision                             # provision builder itself
-  sudo -E $0 ./package gentoo.rpi4.img            # build image
-  sudo -E $0 ./install gentoo rpi4 /dev/mmcblk0   # install Gentoo on block device
+  sudo $0 ./provision                          # provision builder itself
+  sudo $0 ./package gentoo.rpi4.img            # build image
+  sudo $0 ./install gentoo rpi4 /dev/mmcblk0   # install directly on block device
 
 EOM
 }
+
+while getopts :m:h OPTION; do
+    case $OPTION in
+        h) usage ;;
+        \?) usage ;;
+    esac
+done
+shift $((OPTIND-1))
 
 (( $# > 0 )) || usage
 

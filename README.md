@@ -30,13 +30,13 @@ This projects builds and installs Gentoo using Gentoo as build environment.
 If your host runs Gentoo, you can use it as build environment by provisioning
 your system with the needed tools through the `provision` command:
 
-    sudo ./provision builder crossdev
+    sudo ./provision
 
 If your host system is not Gentoo (or even if it is but you prefer to keep your
 system untouched), you can run all commands in a `chroot`-ed Gentoo environment
 through the `builder` command.  So the previous command becomes instead:
 
-    sudo ./builder ./provision builder crossdev
+    sudo ./builder ./provision
 
 The `builder` command creates a `builder.img` image containing a Gentoo build
 environment. You can remove the image once no longer needed.
