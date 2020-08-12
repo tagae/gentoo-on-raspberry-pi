@@ -15,17 +15,17 @@ The system is built with settings from the profiles/\$PROFILE.* files.
 
 Options:
 
-  -h    print this help message
   -w    wipe DEVICE before installing
   -q    log messages in scripting mode
   -m    configure kernel before building
+  -h    print this help message
 
 Environment variables:
 
   WIPE          same as -w
   QUIET         same as -q
   MENUCONFIG    same as -m
-  PASSWORD      set root password to $PASSWORD
+  PASSWORD      set root password to \$PASSWORD
 
 For further environment variables that can customize the installation process,
 see '$(realpath --relative-to="$(pwd)" $SCRIPT_DIR)/bootstrap -h'.

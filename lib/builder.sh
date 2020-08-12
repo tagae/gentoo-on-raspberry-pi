@@ -7,8 +7,9 @@ test -v BUILDER_LIB && return || readonly BUILDER_LIB="$(realpath "$BASH_SOURCE"
 : ${MEDIA:=$SCRIPT_NAME.img}
 : ${MEDIA_SIZE:=8g}
 
-source "$LIB_DIR"/chroot.sh
 source "$LIB_DIR"/package.sh
+source "$LIB_DIR"/chroot.sh
+source "$LIB_DIR"/mount.sh
 source "$LIB_DIR"/file.sh
 source "$LIB_DIR"/ui.sh
 

@@ -21,7 +21,7 @@ source "$LIB_DIR"/kernel.sh
 source "$LIB_DIR"/ui.sh
 
 install() {
-    source-from install.d/facets base ${FACETS:-}
+    source-from install.d/facets ${FACETS:-}
     partition-media
     create-file-systems
     install-root
@@ -39,13 +39,10 @@ partition-media() {
 
 find-partitions() {
     local -r devices=("$DEVICE"*)
-    if (( ${#devices[@]} == 3 )); then
-        # $DEVICE itself is at position 0
-        BOOT_DEVICE="${devices[1]}"
-        BASE_DEVICE="${devices[2]}"
-    else
-        false
-    fi
+    (( ${#devices[@]} == 3 )) || return 1
+    # $DEVICE itself is at position 0
+    BOOT_DEVICE="${devices[1]}"
+    BASE_DEVICE="${devices[2]}"
 }
 
 create-file-systems() {
@@ -65,8 +62,7 @@ install-root() {
     crossdev-unneeded || enable-emulation
     config-fstab
     config-etc
-    config-journal
-    config-networking
+    config-systemd
     config-ssh-access
     set-root-password
 }
@@ -77,8 +73,8 @@ mount-base-device() {
 }
 
 bootstrap-root() {
-    milestone "$STAGE3_URL"
-    ./bootstrap -qu "$STAGE3_URL" "$ROOT"
+    milestone
+    env ARCH=arm64 ./bootstrap -q "$ROOT"
 }
 
 enable-emulation() {
@@ -107,13 +103,10 @@ config-etc() {
     cp -uvr install.d/etc/ "$ROOT"/
 }
 
-config-journal() {
+config-systemd() {
     milestone
     chattr -V +C "$ROOT"/var/log/journal/
-}
-
-config-networking() {
-    milestone
+    chroot "$ROOT" systemd-machine-id-setup
     chroot "$ROOT" systemctl enable systemd-networkd systemd-resolved sshd
 }
 
@@ -158,7 +151,7 @@ install-boot-config() {
         rootfstype=btrfs
         rootflags=subvol=/root
         rootwait
-        init=/usr/lib/systemd/systemd
+        init=/lib/systemd/systemd
         systemd.gpt_auto=no
     )
     local -r CONFIG=(

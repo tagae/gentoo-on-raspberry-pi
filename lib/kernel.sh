@@ -23,12 +23,7 @@ install-kernel() {
 
 fetch-kernel() {
     milestone
-    if test -d $KERNEL_SRC; then
-        update-repo-if-older-than $KERNEL_SRC '1 day'
-    else
-        # use default repo branch
-        git clone --branch $KERNEL_BRANCH --depth 1 $KERNEL_REPO $KERNEL_SRC
-    fi
+    fetch-branch $KERNEL_REPO $KERNEL_BRANCH '1 day' $KERNEL_SRC
 }
 
 build-kernel() {
@@ -38,10 +33,9 @@ build-kernel() {
 }
 
 config-kernel() {
-    [ ! -e $KERNEL_SRC/.config ] || [ ! -v MENUCONFIG ] || return  0
     milestone
     move-kernel-config-out
-    if [ -n "${FACETS:-}" ]; then
+    if [ -n "$FACETS" ]; then
         apply-kernel-config install.d/facets $FACETS
     else
         cross-make ${PLATFORM}_defconfig
@@ -57,12 +51,14 @@ config-kernel() {
 move-kernel-config-out() {
     [ -e $KERNEL_SRC/.config ] || return 0
     local -i i=0
-    while [ -e $KERNEL_SRC/.config.$(( i++ )) ]; do continue; done
+    while [ -e $KERNEL_SRC/.config.$(( ++i )) ]; do continue; done
     mv -v $KERNEL_SRC/.config $KERNEL_SRC/.config.$i
 }
 
 apply-kernel-config() {
+    [ ! -e $KERNEL_SRC/.config ] || return 0
     local CONFIG_DIR="$1" CONFIG_NAME CONFIG_FILE
+    shift
     while (( $# > 0 )); do
         CONFIG_NAME="$1"
         shift
@@ -116,11 +112,7 @@ install-overlays() {
 
 fetch-firmware() {
     milestone
-    if [ -d $FIRMWARE_SRC ]; then
-        update-repo-if-older-than $FIRMWARE_SRC '1 day'
-    else
-        git clone --branch stable --depth 1 https://github.com/raspberrypi/firmware $FIRMWARE_SRC
-    fi
+    fetch-branch $FIRMWARE_REPO $FIRMWARE_BRANCH '1 day' $FIRMWARE_SRC
 }
 
 install-firmware() {

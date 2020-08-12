@@ -22,6 +22,10 @@ Environment variables:
 
   MENUCONFIG   if defined, configure kernel before building
 
+Sample invocation:
+
+  $0 gentoo.rpi4.img   # boot the gentoo.rpi4.img image
+
 EOM
 }
 

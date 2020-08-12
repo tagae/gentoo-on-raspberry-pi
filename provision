@@ -29,6 +29,8 @@ shift $((OPTIND-1))
 
 is-gentoo / || die "Host is not Gentoo"
 
+(( $# > 0 )) || set -- builder crossdev
+
 cd "$SCRIPT_DIR"
 
 echo

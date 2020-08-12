@@ -16,7 +16,7 @@ jobs:
       run: sudo apt-get install -y qemu-user-binfmt
 
     - name: Provision builder
-      run: sudo ./builder ./provision builder crossdev
+      run: sudo ./builder ./provision
 
     - name: Build image
       run: sudo ./builder ./package gentoo.virt.img
