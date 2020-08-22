@@ -66,6 +66,7 @@ install-root() {
     config-fstab
     config-etc
     config-journal
+    # config-portage
     config-networking
     config-ssh-access
     set-root-password
@@ -110,6 +111,12 @@ config-etc() {
 config-journal() {
     milestone
     chattr -V +C "$ROOT"/var/log/journal/
+}
+
+config-portage() {
+    milestone
+    emerge --root "$ROOT" --sync
+    ARCH=$ARCH PORTAGE_CONFIGROOT="$ROOT" eselect profile set $PORTAGE_PROFILE
 }
 
 config-networking() {

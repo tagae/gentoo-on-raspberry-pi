@@ -53,6 +53,9 @@ show-system-info() {
     echo
     echo '---===[ System Info ]===---'
     remote uname -a
+    echo
+    remote ip address
+    echo
     remote emerge --info
     echo
 }

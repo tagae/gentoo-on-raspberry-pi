@@ -8,3 +8,5 @@ CXXFLAGS="$CFLAGS"
 CMDLINE+=(
     console=ttyS0,115200
 )
+ARCH=arm64
+PORTAGE_PROFILE=default/linux/arm64/17.0/systemd

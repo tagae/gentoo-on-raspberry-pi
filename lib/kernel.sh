@@ -68,8 +68,13 @@ apply-kernel-config() {
         shift
         CONFIG_FILE=$CONFIG_DIR/$CONFIG_NAME.linux.config
         if [ -e $CONFIG_FILE ]; then
-            echo applying facet $CONFIG_NAME
+            echo appending $(basename $CONFIG_FILE)
             cat $CONFIG_FILE >> $KERNEL_SRC/.config
+        fi
+        CONFIG_PATCH=$CONFIG_DIR/$CONFIG_NAME.linux.config.patch
+        if [ -e $CONFIG_PATCH ]; then
+            echo applying $(basename $CONFIG_PATCH)
+            patch $KERNEL_SRC/.config < $CONFIG_PATCH
         fi
     done
     cross-make oldconfig

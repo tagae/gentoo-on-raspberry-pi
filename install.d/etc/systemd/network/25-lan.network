@@ -1,10 +1,10 @@
 [Match]
 
-Name=en*
+Name=en* eth*
 
 [Network]
 
 DHCP=yes
 
-# If you use a firewall, make sure to open UDP port 5353
+# If you use a firewall, make sure UDP port 5353 is open
 MulticastDNS=yes

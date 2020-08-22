@@ -1,12 +1,5 @@
 test -v GENTOO_LIB && return || readonly GENTOO_LIB="$(realpath "$BASH_SOURCE")"
 
-case $(uname -m) in
-    x86_64)
-        : ${PORTAGE_PROFILE:=default/linux/amd64/17.1/systemd} ;;
-    aarch64)
-        : ${PORTAGE_PROFILE:=default/linux/arm64/17.0/systemd} ;;
-esac
-
 is-gentoo() {
     local -r root="${1:-}"
     if test -f "$root"/etc/os-release; then
