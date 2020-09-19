@@ -52,6 +52,7 @@ show-system-info() {
     # that a few basic commands run without error.
     echo
     echo '---===[ System Info ]===---'
+    echo
     remote uname -a
     echo
     remote ip address

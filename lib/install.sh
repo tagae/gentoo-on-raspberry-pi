@@ -66,7 +66,7 @@ install-root() {
     config-fstab
     config-etc
     config-journal
-    # config-portage
+    config-portage
     config-networking
     config-ssh-access
     set-root-password
@@ -115,8 +115,8 @@ config-journal() {
 
 config-portage() {
     milestone
-    emerge --root "$ROOT" --sync
-    ARCH=$ARCH PORTAGE_CONFIGROOT="$ROOT" eselect profile set $PORTAGE_PROFILE
+    rsync -a $(portageq get_repo_path / gentoo)/ $ROOT/$(portageq get_repo_path $ROOT gentoo)/
+    ARCH=$CROSSDEV_ARCH PORTAGE_CONFIGROOT="$ROOT" eselect profile set $CROSSDEV_PROFILE
 }
 
 config-networking() {
