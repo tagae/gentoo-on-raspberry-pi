@@ -78,3 +78,7 @@ setup-qemu() {
     grep :qemu-aarch64: /usr/share/qemu/binfmt.d/qemu.conf >> $qemu_conf
     systemctl restart systemd-binfmt
 }
+
+cross-emerge() {
+    KERNEL_DIR="$PWD/install.d/linux" PORTAGE_CONFIGROOT="$ROOT" aarch64-unknown-linux-gnu-emerge --root "$ROOT" --sysroot "$ROOT" "$@"
+}
