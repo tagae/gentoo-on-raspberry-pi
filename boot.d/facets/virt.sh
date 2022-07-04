@@ -18,6 +18,7 @@ fi
 if [ -v MACVTAP ]; then
     echo Setting up bridged macvtap interface linked to $MACVTAP...
     ip link add link $MACVTAP name macvtap0 type macvtap mode bridge
+    ip link set dev $MACVTAP allmulticast on
     CLEANUPS+=('ip link delete macvtap0')
     ip link set macvtap0 up
     CLEANUPS+=('ip link set macvtap0 down')
