@@ -47,6 +47,10 @@ remote() {
         -p 2222 root@localhost "$@"
 }
 
+check-services() {
+    remote ! systemctl is-failed --quiet '*'
+}
+
 show-system-info() {
     # Besides displaying system information, this checks
     # that a few basic commands run without error.
@@ -61,6 +65,7 @@ cd "$SCRIPT_DIR"
 
 parse-media-name
 boot-instance
+check-services
 show-system-info
 shutdown-instance
 
