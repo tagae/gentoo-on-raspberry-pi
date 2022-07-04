@@ -9,6 +9,7 @@ test -v BUILDER_LIB && return || readonly BUILDER_LIB="$(realpath "$BASH_SOURCE"
 
 source "$LIB_DIR"/package.sh
 source "$LIB_DIR"/chroot.sh
+source "$LIB_DIR"/gentoo.sh
 source "$LIB_DIR"/mount.sh
 source "$LIB_DIR"/file.sh
 source "$LIB_DIR"/ui.sh
@@ -34,6 +35,7 @@ setup-builder-chroot() {
     bind-file $(realpath -e /etc/resolv.conf) $ROOT/etc/resolv.conf
     bind-project-directory
     bind-public-ssh-key
+    bind-portage-tree
 }
 
 bind-project-directory() {
@@ -45,6 +47,11 @@ bind-public-ssh-key() {
     local -r BUILDER_SSH_DIR="$ROOT/$BUILDER_HOME/.ssh"
     mkdir -vp --mode go-rwx "$BUILDER_SSH_DIR"
     bind-file "$SSH_KEY" "$BUILDER_SSH_DIR"/"$(basename "$SSH_KEY")"
+}
+
+bind-portage-tree() {
+    command -v portageq > /dev/null || return 0
+    bind-dir "$(gentoo-repo)" "$ROOT/$(gentoo-repo "$ROOT")"
 }
 
 install-builder-packages() {
