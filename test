@@ -44,6 +44,7 @@ shutdown-instance() {
 remote() {
     ssh -q -n -i install.d/ssh/$MACHINE \
         -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+        -o ConnectTimeout=5 \
         -p 2222 root@localhost "$@"
 }
 
