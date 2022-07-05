@@ -1,0 +1,27 @@
+#!/usr/bin/expect -f
+
+set media [lindex $argv 0]
+set timeout 5
+set login_prompt {login: $};
+set password_prompt {Password: $};
+set cmdline_prompt {\# $};
+
+spawn ./boot $media
+
+expect -timeout 60 $login_prompt
+send "root\n"
+
+expect $password_prompt
+send $env(PASSWORD)
+send "\n"
+expect $cmdline_prompt
+send "id\n"
+expect {
+    "uid=0(root)" {}
+    timeout { exit 1 }
+}
+
+expect $cmdline_prompt
+send "systemctl poweroff\n"
+
+expect -timeout 15 eof

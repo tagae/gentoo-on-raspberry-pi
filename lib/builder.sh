@@ -60,5 +60,6 @@ install-builder-packages() {
            sys-fs/btrfs-progs \
            sys-fs/dosfstools \
            dev-vcs/git \
-           sys-devel/bc
+           sys-devel/bc \
+           dev-tcltk/expect
 }
