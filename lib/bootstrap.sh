@@ -50,11 +50,10 @@ fetch-stage3() {
     milestone ${STAGE3_ARCHIVE%%.*}
     cd bootstrap.d
     for suffix in '' .CONTENTS{,.gz} .DIGESTS; do
-        local file="$STAGE3_ARCHIVE$suffix" remote="$STAGE3_URL$suffix"
-        if ! test -f $file; then
-            if curl --silent --head --fail --output /dev/null "$remote"; then
-                curl --fail --remote-name "$remote"
-            fi
+        local remote="$STAGE3_URL$suffix" http_code
+        if ! test -f "$(basename "$remote")"; then
+            http_code=$(curl --write-out "%{http_code}" --remote-name "$remote")
+            [[ ${http_code} = 200 || ${http_code} = 404 ]]
         fi
     done
     check-download-integrity
