@@ -106,7 +106,6 @@ config-etc() {
 config-systemd() {
     milestone
     chattr -V +C "$ROOT"/var/log/journal/
-    chroot "$ROOT" systemd-machine-id-setup
     chroot "$ROOT" systemctl enable systemd-networkd systemd-resolved sshd
 }
 
