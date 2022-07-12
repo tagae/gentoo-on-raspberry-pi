@@ -22,7 +22,7 @@ jobs:
       run: sudo ./builder env PASSWORD=test-S3cr3t ./package gentoo.virt.img
 
     - name: Test image
-      run: sudo ./builder ./test gentoo.virt.img
+      run: ./test gentoo.virt.img
 
     - name: Test console
       run: sudo ./builder env PASSWORD=test-S3cr3t ./test-console gentoo.virt.img

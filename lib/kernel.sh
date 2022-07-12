@@ -34,46 +34,31 @@ build-kernel() {
 
 config-kernel() {
     milestone
-    move-kernel-config-out
-    if [ -n "$FACETS" ]; then
-        apply-kernel-config install.d/facets $FACETS
-    else
-        cross-make ${PLATFORM}_defconfig
-    fi
-    if [ -v MACHINE ]; then
-        set-kernel-config DEFAULT_HOSTNAME "$MACHINE"
-    fi
-    if [ -v PROFILE ]; then
-        set-kernel-config LOCALVERSION "-$PROFILE"
-    fi
-}
-
-move-kernel-config-out() {
-    [ -e $KERNEL_SRC/.config ] || return 0
-    local -i i=0
-    while [ -e $KERNEL_SRC/.config.$(( ++i )) ]; do continue; done
-    mv -v $KERNEL_SRC/.config $KERNEL_SRC/.config.$i
+    apply-kernel-config install.d/facets $FACETS
+    {
+        if [ -v MACHINE ]; then
+            echo CONFIG_DEFAULT_HOSTNAME="$MACHINE"
+        fi
+        if [ -v PROFILE ]; then
+            echo CONFIG_LOCALVERSION="-$PROFILE"
+        fi
+    } >> $KERNEL_SRC/combined.config
+    KCONFIG_ALLCONFIG=combined.config cross-make allnoconfig
 }
 
 apply-kernel-config() {
-    [ ! -e $KERNEL_SRC/.config ] || return 0
     local CONFIG_DIR="$1" CONFIG_NAME CONFIG_FILE
     shift
+    rm -f $KERNEL_SRC/combined.config
     while (( $# > 0 )); do
         CONFIG_NAME="$1"
         shift
         CONFIG_FILE=$CONFIG_DIR/$CONFIG_NAME.linux.config
         if [ -e $CONFIG_FILE ]; then
             echo applying facet $CONFIG_NAME
-            cat $CONFIG_FILE >> $KERNEL_SRC/.config
+            cat $CONFIG_FILE >> $KERNEL_SRC/combined.config
         fi
     done
-    cross-make oldconfig
-}
-
-set-kernel-config() {
-    local -r key="$1" value="$2"
-    sed -i 's/CONFIG_'$key'="[^"]*"/CONFIG_'$key'="'"$value"'"/g' $KERNEL_SRC/.config
 }
 
 make-kernel() {
