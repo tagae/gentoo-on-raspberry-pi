@@ -35,15 +35,13 @@ build-kernel() {
 config-kernel() {
     milestone
     apply-kernel-config install.d/facets $FACETS
-    {
-        if [ -v MACHINE ]; then
-            echo CONFIG_DEFAULT_HOSTNAME="$MACHINE"
-        fi
-        if [ -v PROFILE ]; then
-            echo CONFIG_LOCALVERSION="-$PROFILE"
-        fi
-    } >> $KERNEL_SRC/combined.config
     KCONFIG_ALLCONFIG=combined.config cross-make allnoconfig
+    if [ -v MACHINE ]; then
+        set-kernel-config DEFAULT_HOSTNAME "$MACHINE"
+    fi
+    if [ -v PROFILE ]; then
+        set-kernel-config LOCALVERSION "-$PROFILE"
+    fi
 }
 
 apply-kernel-config() {
@@ -59,6 +57,11 @@ apply-kernel-config() {
             cat $CONFIG_FILE >> $KERNEL_SRC/combined.config
         fi
     done
+}
+
+set-kernel-config() {
+    local -r key="$1" value="$2"
+    sed -i 's/CONFIG_'$key'="[^"]*"/CONFIG_'$key'="'"$value"'"/g' $KERNEL_SRC/.config
 }
 
 make-kernel() {
