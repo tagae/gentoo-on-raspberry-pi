@@ -18,7 +18,7 @@ EOM
 readonly MEDIA="$1"
 
 boot-instance() {
-    ./boot "$MEDIA" &
+    sudo ./builder env TAP=tap0 ./boot "$MEDIA" &
     wait-for-instance
     CLEANUPS+=(shutdown-instance)
 }
@@ -45,7 +45,7 @@ remote() {
     ssh -q -n -i install.d/ssh/$MACHINE \
         -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
         -o ConnectTimeout=5 \
-        -p 2222 root@localhost "$@"
+        root@$MACHINE.local "$@"
 }
 
 check-services() {

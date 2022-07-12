@@ -2,7 +2,6 @@ test -v BOOT_VIRT_FACET && return || readonly BOOT_VIRT_FACET="$(realpath "$BASH
 
 QEMU_OPTS+=(
     -device virtio-rng
-    -nic user,model=virtio,hostfwd=tcp::2222-:22
     -drive file=$MEDIA,format=raw,if=virtio
 )
 
@@ -12,6 +11,24 @@ if ! ${DAEMON:-false}; then
         -chardev stdio,signal=off,mux=on,id=char0
         -device virtconsole,chardev=char0,id=console0
         -mon chardev=char0,mode=readline
+    )
+fi
+
+if [ -v SSH_FWD ]; then
+    QEMU_OPTS+=(
+        -nic user,model=virtio,hostfwd=tcp::$SSH_FWD-:22
+    )
+fi
+
+if [ -v TAP ]; then
+    echo Setting up bridged TAP interface...
+    ip tuntap add $TAP mode tap
+    CLEANUPS+=("ip link delete $TAP")
+    ip link set dev $TAP up
+    systemd-resolve --set-mdns=yes --interface=$TAP
+    QEMU_OPTS+=(
+        -net nic,model=virtio
+        -net tap,ifname=$TAP,script=no,downscript=no
     )
 fi
 
