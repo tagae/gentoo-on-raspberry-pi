@@ -13,8 +13,13 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Update packages
-      run: sudo apt-get update
+    - name: Enable multicast DNS
+      run: |
+        sudo apt-get install -y libnss-resolve
+        sudo mkdir -p /etc/systemd/resolved.conf.d
+        sudo cp .github/runners/multicast-dns.conf /etc/systemd/resolved.conf.d/
+        sudo systemctl restart systemd-resolved
+        sudo sed -i 's/^hosts:.*/hosts:          files resolve [!UNAVAIL=return] dns/' /etc/nsswitch.conf
 
     - name: Setup aarch64 emulation
       run: sudo apt-get install -y qemu-user-binfmt

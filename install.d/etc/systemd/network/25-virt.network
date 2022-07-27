@@ -1,0 +1,9 @@
+[Match]
+
+Driver=virtio_net
+
+[Network]
+
+DHCP=no
+IPv6AcceptRA=false
+MulticastDNS=yes
