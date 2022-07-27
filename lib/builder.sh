@@ -33,7 +33,7 @@ bootstrap-builder() {
 setup-builder-chroot() {
     bind-system-dirs
     bind-file $(realpath -e /etc/resolv.conf) $ROOT/etc/resolv.conf
-    bind-dir /run/dbus $ROOT/run/dbus
+    bind-dir /run $ROOT/run
     bind-project-directory
     bind-public-ssh-key
     bind-portage-tree

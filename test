@@ -18,7 +18,7 @@ EOM
 readonly MEDIA="$1"
 
 boot-instance() {
-    sudo ./builder env TAP=tap0 ./boot "$MEDIA" &
+    env TAP=tap0 ./boot "$MEDIA" &
     wait-for-instance
     CLEANUPS+=(shutdown-instance)
 }
