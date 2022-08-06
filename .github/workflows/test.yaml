@@ -22,7 +22,10 @@ jobs:
         sudo sed -i 's/^hosts:.*/hosts:          files resolve [!UNAVAIL=return] dns/' /etc/nsswitch.conf
 
     - name: Setup aarch64 emulation
-      run: sudo apt-get install -y qemu-user-binfmt
+      run: |
+        sudo apt-get install -y qemu-user-binfmt
+        sudo cp .github/runners/qemu-aarch64.conf /etc/binfmt.d/
+        sudo systemctl restart systemd-binfmt
 
     - name: Provision builder
       run: sudo ./builder ./provision
