@@ -27,6 +27,12 @@ jobs:
         sudo cp .github/runners/qemu-aarch64.conf /etc/binfmt.d/
         sudo systemctl restart systemd-binfmt
 
+    - name: Cache builder
+      uses: actions/cache@v3
+      with:
+        path: builder.img
+        key: builder-${{ hashFiles('builder', 'lib/builder.sh', 'provision', 'lib/provision.sh', 'provision.d') }}
+
     - name: Provision builder
       run: sudo ./builder ./provision
 
