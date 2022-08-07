@@ -9,6 +9,8 @@ jobs:
 
   linux:
     runs-on: ubuntu-22.04
+    env:
+      PASSWORD: test-S3cr3t
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -37,10 +39,14 @@ jobs:
       run: sudo ./builder ./provision
 
     - name: Build image
-      run: sudo ./builder env PASSWORD=test-S3cr3t ./package gentoo.virt.img
+      run: sudo --preserve-env=PASSWORD ./builder ./package gentoo.virt.img
 
     - name: Test image
-      run: sudo ./builder ./test gentoo.virt.img
+      run: sudo --preserve-env=PASSWORD ./builder ./test gentoo.virt.img
 
-    - name: Test console
-      run: sudo ./builder env PASSWORD=test-S3cr3t ./test-console gentoo.virt.img
+    - name: Clean up
+      run: |
+        sudo umount -vR /tmp/builder-* || true
+        sudo rmdir -vf /tmp/builder-* || true
+        sudo ip link delete tap0 || true
+        sudo sync
