@@ -13,7 +13,7 @@ proc die {message} {
     exit 2
 }
 
-proc remote {machine args} {
+proc ssh {machine args} {
     exec ssh -q -n -i install.d/ssh/$machine \
         -o StrictHostKeyChecking=no \
         -o UserKnownHostsFile=/dev/null \
@@ -52,7 +52,7 @@ expect $cmdline_prompt { check "Logged in through console" } \
     timeout { die "Expected command line prompt" }
 
 stage "Checking systemd services"
-remote $machine ! systemctl is-failed --quiet '*'
+ssh $machine ! systemctl is-failed --quiet '*'
 check "All systemd services are operational"
 
 stage "Shutting down"
