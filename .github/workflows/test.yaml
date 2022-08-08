@@ -47,6 +47,6 @@ jobs:
     - name: Clean up
       run: |
         sudo umount -vR /tmp/builder-* || true
-        sudo rmdir -vf /tmp/builder-* || true
+        sudo rmdir -v /tmp/builder-* || true
         sudo ip link delete tap0 || true
         sudo sync
