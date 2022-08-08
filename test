@@ -30,16 +30,14 @@ regexp -all {^(.+)\.([^.]+)\.img} $media whole_match machine profile
 
 set cmdline_prompt {\# $}
 
-set timeout 5
-
 stage "Boot up"
 spawn env TAP=tap0 ./boot $media
-expect -timeout 60 \
+expect -timeout 150 \
     "This is $machine" { check "Instance booted up" } \
     timeout { die "Expected instance to finish booting up" }
 
 stage "Console login"
-expect {login: $} { } \
+expect -timeout 20 {login: $} { } \
     timeout { die "Expected console login prompt" }
 
 send "root\r"
@@ -57,6 +55,6 @@ check "All systemd services are operational"
 
 stage "Shutting down"
 send "systemctl poweroff\r"
-expect -timeout 10 \
+expect -timeout 30 \
     timeout { die "Expected instance termination" } \
     eof { check "Instance shut down successfully" }
