@@ -34,7 +34,7 @@ set timeout 5
 
 stage "Boot up"
 spawn env TAP=tap0 ./boot $media
-expect -timeout 35 \
+expect -timeout 60 \
     "This is $machine" { check "Instance booted up" } \
     timeout { die "Expected instance to finish booting up" }
 
