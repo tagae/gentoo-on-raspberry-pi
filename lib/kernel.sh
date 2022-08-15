@@ -35,7 +35,7 @@ build-kernel() {
 config-kernel() {
     milestone
     apply-kernel-config install.d/facets $FACETS
-    cross-make KCONFIG_ALLCONFIG=combined.config allnoconfig
+    cross-make KCONFIG_ALLCONFIG=combined.config allnoconfig ${MENUCONFIG:+menuconfig}
     if [ -v MACHINE ]; then
         set-kernel-config DEFAULT_HOSTNAME "$MACHINE"
     fi
@@ -66,7 +66,7 @@ set-kernel-config() {
 
 make-kernel() {
     milestone "$@"
-    cross-make ${MENUCONFIG:+menuconfig} "$@"
+    cross-make "$@"
 }
 
 cross-make() {
