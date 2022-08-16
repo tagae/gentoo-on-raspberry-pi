@@ -39,10 +39,10 @@ jobs:
       run: sudo ./builder ./provision
 
     - name: Build image
-      run: sudo --preserve-env=PASSWORD ./builder ./package gentoo.virt.img
+      run: sudo --preserve-env=PASSWORD ./builder ./package gentoo.test.img
 
     - name: Test image
-      run: sudo --preserve-env=PASSWORD ./builder ./test gentoo.virt.img
+      run: sudo --preserve-env=PASSWORD ./builder ./test gentoo.test.img
 
     - name: Clean up
       run: |
