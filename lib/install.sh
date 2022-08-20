@@ -60,8 +60,8 @@ install-root() {
     ROOT="$BASE/root"
     bootstrap-root
     crossdev-unneeded || enable-emulation
+    provision-files
     config-fstab
-    config-etc
     config-systemd
     config-ssh-access
     set-root-password
@@ -82,6 +82,17 @@ enable-emulation() {
     bind-file /usr/bin/qemu-aarch64 "$ROOT"/usr/bin/qemu-aarch64
 }
 
+provision-files() {
+    milestone
+    local facet facet_dir
+    for facet in $FACETS; do
+        facet_files=install.d/files/$facet/
+        if [[ -d "$facet_files" ]]; then
+            cp -uvr $facet_files/* "$ROOT"/
+        fi
+    done
+}
+
 config-fstab() {
     milestone
     local boot_uuid base_uuid
@@ -96,11 +107,6 @@ config-fstab() {
 fstab-has() {
     local -r expression="$1"
     egrep -q "$expression" "$ROOT"/etc/fstab
-}
-
-config-etc() {
-    milestone
-    cp -uvr install.d/etc/ "$ROOT"/
 }
 
 config-systemd() {
