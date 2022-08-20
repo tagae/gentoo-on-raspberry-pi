@@ -5,11 +5,11 @@ proc stage {title} {
 }
 
 proc check {message} {
-    puts "\n\n\u2705 $message\n"
+    puts "\n\n\u2714 $message\n"
 }
 
 proc die {message} {
-    puts stderr "\n\u274C $message\n"
+    puts stderr "\n\u2718 $message\n"
     exit 2
 }
 
