@@ -1,0 +1,139 @@
+# -*-  eval: (ansible) -*-
+
+- hosts: home
+
+  tasks:
+
+  #- name: Set system locale
+  #  command: localectl set-locale C.UTF-8
+
+  - name: Set system time zone
+    command: timedatectl set-timezone Europe/Brussels
+
+  - name: Set system time from time server
+    command: timedatectl set-ntp true
+
+  - name: Get Gentoo repo path
+    command: portageq get_repo_path / gentoo
+    register: gentoo_repo_path
+
+  - debug:
+      msg: "Gentoo repo is at {{ gentoo_repo_path.stdout }}"
+
+  - name: Gentoo repo exists?
+    stat:
+      path: '{{ gentoo_repo_path.stdout }}'
+    register: gentoo_repo
+
+  - name: Sync repo
+    command: emaint sync -r gentoo
+    when: not gentoo_repo.stat.exists
+
+  - name: Ensure user-defined sets dir exists
+    file: path=/etc/portage/sets state=directory
+
+  - name: Define `workstation` package set
+    copy:
+      content: |
+        app-portage/gentoolkit
+        app-portage/eix
+        app-shells/fish
+        app-misc/tmux
+        sys-process/htop
+        app-editors/emacs
+        app-admin/sudo
+      dest: /etc/portage/sets/workstation
+
+  - name: Define `home-server` package set
+    copy:
+      content: |
+        net-fs/samba
+      dest: /etc/portage/sets/home-server
+
+  - name: Define workstation package USE settings
+    copy:
+      content: |
+        # required by app-shells/fish
+        dev-libs/libpcre2 pcre32
+        # support fetching over HTTPS
+        dev-vcs/git curl -webdav -perl -pcre
+      dest:  /etc/portage/package.use/workstation
+
+  - name: Set package accept keywords
+    copy:
+      content: |
+        =dev-vcs/git-2.37.3 ~arm64
+      dest:  /etc/portage/package.accept_keywords/workstation
+
+  - name: Install packages
+    command: emerge -uUDN @workstation @home-server
+
+  - name: Clean non-requested packages
+    command: emerge --depclean
+
+  - name: Ensure portage postsync dir exists
+    file: path=/etc/portage/postsync.d state=directory
+
+  - name: Define eix postsync hook
+    copy:
+      content: |
+        #!/usr/bin/env bash
+        if [[ -e /var/cache/eix/portage.eix ]]; then
+          rsync -ca /var/cache/eix/portage.eix /var/cache/eix/previous.eix;
+        fi
+        eix-update
+        if [[ -e /var/cache/eix/previous.eix ]]; then
+          eix-diff;
+        fi
+      dest: /etc/portage/postsync.d/eix
+      mode: +x
+
+  - name: Add user `tagae`
+    user:
+      name: tagae
+      comment: Sebastián González
+      shell: /bin/fish
+      groups: [wheel]
+
+  - name: Set authorized key for `tagae`
+    authorized_key:
+      user: tagae
+      state: present
+      key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC/29N3PD/JNwt/NpftlYDq5fpobM2YZ9IctDLtAI4YsPMmf0ltBNJ7bt3vim+U51CtxBNyBNqryTRr2EShHoS1ifDkySJUSdIDDM2uL03gmhVKTv9+RKfyP5TNxitXk0zSNJFrht5kLs0J8mzoiWi5Sf4X4Z3xiNaczH/fe7UDAEItw6265SKEZ1lgxmM8suomAD5BnJcmOrnI9ReCaKfrs7iFSk5SvsDzqEt7fnHYS/DYbmmvO/tGRewDnOtIInJIt9nxjkzeL0Od/kKHUnjb4EwmB5UMYCb+vPjs6JP1FA6uFMwyhWImoJa7kC2U+WYKV9sq5lWW78sU7wqwLjIEhkp+xG8ocMijkN9U9al3XGokoHEfuDBaYvrIea2h2+0Q5bw8W2xkgzYy2MaL3e8dpbXflfvdgxKyN5FV6ojcIlf2ylkJdUCL2vXxpw7/LohmXPjokZP6GYiROoq9nF/oXLQ4801o6eO1rsiEl44HZ9tqA4gSXP4qBQnHjZPYYLq3a2NKdF1UrGuI6BbcK2abeChjoVC+3t2BjEWOUBw7XiFF7MczWDUZmjfbhWsKrQ1PjOQ/7n9DzKYNAd9wR92q6cepfcqoq3iWk19UGkRpFzKTID0QHxx5gyOFNxai0gh2J/GBg27xs4CEz1OgO7iE+tw+8N1ONXobqyFJQnA2Hw== openpgp:0x9DA72D3B
+
+  - name: Samba
+    copy:
+      content: |
+        [Global]
+        # https://wiki.samba.org/index.php/Configure_Samba_to_Work_Better_with_Mac_OS_X
+        vfs objects = fruit streams_xattr
+        fruit:metadata = stream
+        fruit:model = MacSamba
+        fruit:posix_rename = yes
+        fruit:veto_appledouble = no
+        fruit:nfs_aces = no
+        fruit:wipe_intentionally_left_blank_rfork = yes
+        fruit:delete_empty_adfiles = yes
+
+        [TimeMachine]
+        fruit:time machine = yes
+        fruit:time machine max size = 1G
+        comment = Time Machine
+        path = /mnt/timemachine
+        valid users = tagae
+      dest: /etc/samba/smb.conf
+
+  - name: Enable Samba
+    systemd:
+      name: smbd
+      state: started
+      enabled: yes
+
+  - name: Password-less sudo access to members of 'wheel'
+    copy:
+      content: |
+        # Allow members of group 'wheel' to execute any command without a password
+        %wheel ALL=(ALL:ALL) NOPASSWD: ALL
+      dest: /etc/sudoers.d/wheel
+      mode: go-rwx
+      validate: visudo -cf %s

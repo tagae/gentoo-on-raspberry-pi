@@ -1,0 +1,6 @@
+servers:
+  hosts:
+    home:
+      ansible_host: home.local
+      ansible_user: root
+      ansible_python_interpreter: /usr/bin/python

@@ -1,0 +1,25 @@
+Module                  Size  Used by
+brcmfmac              348160  0
+bcm2835_codec          45056  0
+brcmutil               24576  1 brcmfmac
+bcm2835_v4l2           45056  0
+v4l2_mem2mem           45056  1 bcm2835_codec
+cfg80211              884736  1 brcmfmac
+bcm2835_isp            32768  0
+videobuf2_vmalloc      20480  1 bcm2835_v4l2
+videobuf2_dma_contig    24576  2 bcm2835_codec,bcm2835_isp
+bcm2835_mmal_vchiq     36864  3 bcm2835_codec,bcm2835_v4l2,bcm2835_isp
+videobuf2_memops       20480  2 videobuf2_vmalloc,videobuf2_dma_contig
+rfkill                 40960  2 cfg80211
+videobuf2_v4l2         36864  4 bcm2835_codec,bcm2835_v4l2,v4l2_mem2mem,bcm2835_isp
+videobuf2_common       65536  5 bcm2835_codec,videobuf2_v4l2,bcm2835_v4l2,v4l2_mem2mem,bcm2835_isp
+videodev              319488  6 bcm2835_codec,videobuf2_v4l2,bcm2835_v4l2,videobuf2_common,v4l2_mem2mem,bcm2835_isp
+vc_sm_cma              40960  1 bcm2835_mmal_vchiq
+raspberrypi_hwmon      16384  0
+mc                     61440  6 videodev,bcm2835_codec,videobuf2_v4l2,videobuf2_common,v4l2_mem2mem,bcm2835_isp
+rpivid_mem             16384  0
+uio_pdrv_genirq        16384  0
+uio                    24576  1 uio_pdrv_genirq
+sch_fq_codel           20480  6
+ipv6                  585728  28
+nf_defrag_ipv6         24576  1 ipv6

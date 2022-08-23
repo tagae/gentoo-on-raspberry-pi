@@ -1,0 +1,61 @@
+Module                  Size  Used by
+lz4                    16384  4
+lz4_compress           28672  1 lz4
+aes_neon_bs            28672  0
+aes_neon_blk           32768  1 aes_neon_bs
+crypto_simd            20480  2 aes_neon_bs,aes_neon_blk
+cryptd                 20480  1 crypto_simd
+algif_skcipher         16384  0
+af_alg                 28672  1 algif_skcipher
+hci_uart               49152  1
+btbcm                  20480  1 hci_uart
+serdev                 20480  1 hci_uart
+ipv6                  503808  24
+nf_defrag_ipv6         24576  1 ipv6
+bnep                   28672  2
+bluetooth             438272  26 hci_uart,btbcm,bnep
+ecdh_generic           16384  1 bluetooth
+ecc                    32768  1 ecdh_generic
+brcmfmac              303104  0
+brcmutil               16384  1 brcmfmac
+sha256_generic         16384  0
+libsha256              20480  1 sha256_generic
+vc4                   253952  0
+cfg80211              684032  1 brcmfmac
+cec                    49152  1 vc4
+bcm2835_v4l2           45056  0
+bcm2835_codec          45056  0
+bcm2835_isp            32768  0
+rfkill                 32768  4 bluetooth,cfg80211
+drm_kms_helper        176128  2 vc4
+bcm2835_mmal_vchiq     32768  3 bcm2835_codec,bcm2835_v4l2,bcm2835_isp
+v4l2_mem2mem           32768  1 bcm2835_codec
+videobuf2_vmalloc      20480  1 bcm2835_v4l2
+videobuf2_dma_contig    20480  2 bcm2835_codec,bcm2835_isp
+snd_soc_core          192512  1 vc4
+v3d                    65536  0
+videobuf2_memops       16384  2 videobuf2_vmalloc,videobuf2_dma_contig
+spidev                 24576  0
+videobuf2_v4l2         28672  4 bcm2835_codec,bcm2835_v4l2,v4l2_mem2mem,bcm2835_isp
+videobuf2_common       53248  5 bcm2835_codec,videobuf2_v4l2,bcm2835_v4l2,v4l2_mem2mem,bcm2835_isp
+snd_compress           20480  1 snd_soc_core
+snd_bcm2835            28672  0
+gpu_sched              32768  1 v3d
+snd_pcm_dmaengine      20480  1 snd_soc_core
+videodev              262144  6 bcm2835_codec,videobuf2_v4l2,bcm2835_v4l2,videobuf2_common,v4l2_mem2mem,bcm2835_isp
+drm                   466944  5 gpu_sched,drm_kms_helper,v3d,vc4
+snd_pcm               118784  4 vc4,snd_bcm2835,snd_soc_core,snd_pcm_dmaengine
+mc                     49152  6 videodev,bcm2835_codec,videobuf2_v4l2,videobuf2_common,v4l2_mem2mem,bcm2835_isp
+spi_bcm2835            24576  0
+snd_timer              40960  1 snd_pcm
+raspberrypi_hwmon      16384  0
+drm_panel_orientation_quirks    20480  1 drm
+syscopyarea            16384  1 drm_kms_helper
+sysfillrect            16384  1 drm_kms_helper
+snd                    81920  5 snd_bcm2835,snd_timer,snd_compress,snd_soc_core,snd_pcm
+sysimgblt              16384  1 drm_kms_helper
+vc_sm_cma              36864  1 bcm2835_mmal_vchiq
+fb_sys_fops            16384  1 drm_kms_helper
+rpivid_mem             16384  0
+uio_pdrv_genirq        16384  0
+uio                    24576  1 uio_pdrv_genirq
