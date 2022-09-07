@@ -8,7 +8,7 @@ test -v INSTALL_LIB && return || readonly INSTALL_LIB="$(realpath "$BASH_SOURCE"
 : ${SSH_AUTHORIZED_KEYS:="$HOME/.ssh/id_rsa.pub"}
 
 : ${BASE_MOUNT_OPTS:="subvol=/,compress=zstd,noatime"}
-: ${ROOT_MOUNT_OPTS:="subvol=/root,compress=zstd,noatime"}
+: ${ROOT_MOUNT_OPTS:="compress=zstd,noatime"}
 : ${BOOT_MOUNT_OPTS:="noauto,noatime"}
 
 source "$LIB_DIR"/runtime.sh
@@ -18,23 +18,25 @@ source "$LIB_DIR"/chroot.sh
 source "$LIB_DIR"/gentoo.sh
 source "$LIB_DIR"/crossdev.sh
 source "$LIB_DIR"/kernel.sh
+source "$LIB_DIR"/btrfs.sh
 source "$LIB_DIR"/ui.sh
 
 install() {
     source-from install.d/facets ${FACETS:-}
-    partition-media
-    create-file-systems
+    find-partitions || WIPE=true
+    if $WIPE; then
+        partition-media
+        find-partitions
+        create-file-systems
+    fi
     install-root
     install-boot
 }
 
 partition-media() {
-    if $WIPE || ! find-partitions; then
-        milestone
-        sfdisk --wipe=always --wipe-partition=always "$DEVICE" < install.d/partitions.sfdisk
-        sync
-        WIPE=true # force creation of new file systems
-    fi
+    milestone
+    sfdisk --wipe=always --wipe-partition=always "$DEVICE" < install.d/partitions.sfdisk
+    sync
 }
 
 find-partitions() {
@@ -46,18 +48,13 @@ find-partitions() {
 }
 
 create-file-systems() {
-    find-partitions
-    if $WIPE; then
-        milestone
-        ( set -x; mkfs.fat -c -f 1 -F 32 -n boot -v "$BOOT_DEVICE"; )
-        echo
-        ( set -x; mkfs.btrfs -L base "$BASE_DEVICE"; )
-    fi
+    milestone
+    ( set -x; mkfs.fat -c -f 1 -F 32 -n boot -v "$BOOT_DEVICE"; )
+    echo
+    ( set -x; mkfs.btrfs -L base "$BASE_DEVICE"; )
 }
 
 install-root() {
-    mount-base-device
-    ROOT="$BASE/root"
     bootstrap-root
     crossdev-unneeded || enable-emulation
     provision-files
@@ -67,14 +64,24 @@ install-root() {
     set-root-password
 }
 
+bootstrap-root() {
+    milestone
+    mount-base-device
+    mkdir -vp $BASE/roots
+    if [ -d $BASE/roots/0 ]; then
+        local roots=( $BASE/roots/* )
+        local -i last_subvolume=${roots[-1]##$BASE/roots/}
+        ROOT_SUBVOLUME=/roots/$((last_subvolume++))
+    else
+        ROOT_SUBVOLUME=/roots/0
+    fi
+    ROOT=$BASE/$ROOT_SUBVOLUME
+    env ARCH=arm64 ./bootstrap -q "$ROOT"
+}
+
 mount-base-device() {
     BASE=$(make-temp-dir)
     mount-dir "$BASE_DEVICE" "$BASE" "$BASE_MOUNT_OPTS"
-}
-
-bootstrap-root() {
-    milestone
-    env ARCH=arm64 ./bootstrap -q "$ROOT"
 }
 
 enable-emulation() {
@@ -100,7 +107,7 @@ config-fstab() {
     base_uuid="$(blkid -s UUID -o value "$BASE_DEVICE")"
     {
         fstab-has "^UUID=$boot_uuid" || echo "UUID=$boot_uuid /boot vfat $BOOT_MOUNT_OPTS 1 2"
-        fstab-has "^UUID=$base_uuid" || echo "UUID=$base_uuid / btrfs $ROOT_MOUNT_OPTS 0 0"
+        fstab-has "subvol=$ROOT_SUBVOLUME" || echo "UUID=$base_uuid / btrfs subvol=$ROOT_SUBVOLUME,$ROOT_MOUNT_OPTS 0 0"
     } | tee --append "$ROOT"/etc/fstab
 }
 
@@ -155,7 +162,7 @@ install-boot-config() {
     CMDLINE+=(
         root=PARTUUID="$(blkid -s PARTUUID -o value $BASE_DEVICE)"
         rootfstype=btrfs
-        rootflags=subvol=/root
+        rootflags=subvol=$ROOT_SUBVOLUME
         rootwait
         init=/lib/systemd/systemd
         systemd.gpt_auto=no

@@ -16,3 +16,9 @@ delete-subvolume() {
     done
     btrfs subvolume delete "$ROOT"
 }
+
+snapshot-subvolume() {
+    local -r source="$1" dest="$2"
+    mkdir -vp "$(dirname "$dest")"
+    btrfs subvolume snapshot $source $dest
+}
