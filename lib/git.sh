@@ -1,5 +1,7 @@
 test -v GIT_LIB && return || readonly GIT_LIB="$(realpath $BASH_SOURCE)"
 
+: ${LIB_DIR:="$(dirname "$GIT_LIB")"}
+
 current-branch() {
     local -r REPO="$1"
     git -C $REPO symbolic-ref --short HEAD
@@ -24,4 +26,17 @@ fetch-branch() {
     else
         git clone --branch $BRANCH --depth 1 $REPO_URL $REPO
     fi
+}
+
+git-repo-is-clean() {
+    local -r REPO="$1"
+    git -C $REPO diff-index --quiet HEAD --
+}
+
+git-short-commit-hash() {
+    local -r REPO="${1:-$LIB_DIR}"
+    local hash
+    hash="$(git -C $REPO rev-parse --short HEAD)"
+    git-repo-is-clean $REPO || dirty_suffix="-dirty"
+    echo $hash$dirty_suffix
 }
