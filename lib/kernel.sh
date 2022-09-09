@@ -78,7 +78,9 @@ cross-make() {
 
 install-kernel-image() {
     milestone
-    cp -uv $BUILT_KERNEL/Image $BOOT/$KERNEL_IMAGE_NAME
+    local -r kernel_image_name=kernel-$INSTALL_VERSION.img
+    cp -uv $BUILT_KERNEL/Image $BOOT/$kernel_image_name
+    CONFIG+=(kernel=$kernel_image_name)
 }
 
 install-kernel-modules() {

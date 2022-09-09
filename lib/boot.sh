@@ -37,7 +37,7 @@ boot-system() {
             -nographic \
             ${DAEMON:+-daemonize} \
             -kernel "$BOOT"/kernel*.img \
-            -append "$(< $BOOT/cmdline.txt)" \
+            -append "$(< $BOOT/cmdline*.txt)" \
             "${QEMU_OPTS[@]}"
     )
 }

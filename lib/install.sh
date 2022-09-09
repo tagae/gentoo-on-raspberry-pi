@@ -2,6 +2,17 @@ test -v INSTALL_LIB && return || readonly INSTALL_LIB="$(realpath "$BASH_SOURCE"
 
 : ${LIB_DIR:="$(dirname "$INSTALL_LIB")"}
 
+source "$LIB_DIR"/runtime.sh
+source "$LIB_DIR"/mount.sh
+source "$LIB_DIR"/file.sh
+source "$LIB_DIR"/chroot.sh
+source "$LIB_DIR"/gentoo.sh
+source "$LIB_DIR"/crossdev.sh
+source "$LIB_DIR"/kernel.sh
+source "$LIB_DIR"/btrfs.sh
+source "$LIB_DIR"/git.sh
+source "$LIB_DIR"/ui.sh
+
 : ${QUIET:=false}
 : ${WIPE:=false}
 
@@ -11,15 +22,10 @@ test -v INSTALL_LIB && return || readonly INSTALL_LIB="$(realpath "$BASH_SOURCE"
 : ${ROOT_MOUNT_OPTS:="compress=zstd,noatime"}
 : ${BOOT_MOUNT_OPTS:="noauto,noatime"}
 
-source "$LIB_DIR"/runtime.sh
-source "$LIB_DIR"/mount.sh
-source "$LIB_DIR"/file.sh
-source "$LIB_DIR"/chroot.sh
-source "$LIB_DIR"/gentoo.sh
-source "$LIB_DIR"/crossdev.sh
-source "$LIB_DIR"/kernel.sh
-source "$LIB_DIR"/btrfs.sh
-source "$LIB_DIR"/ui.sh
+: ${INSTALL_VERSION=$(git-short-commit-hash)}
+
+CMDLINE=()
+CONFIG=()
 
 install() {
     source-from install.d/facets ${FACETS:-}
@@ -67,16 +73,15 @@ install-root() {
 bootstrap-root() {
     milestone
     mount-base-device
-    mkdir -vp $BASE/roots
-    if [ -d $BASE/roots/0 ]; then
-        local roots=( $BASE/roots/* )
-        local -i last_subvolume=${roots[-1]##$BASE/roots/}
-        ROOT_SUBVOLUME=/roots/$((last_subvolume++))
-    else
-        ROOT_SUBVOLUME=/roots/0
-    fi
+    ROOT_SUBVOLUME=/root-$INSTALL_VERSION
     ROOT=$BASE/$ROOT_SUBVOLUME
     env ARCH=arm64 ./bootstrap -q "$ROOT"
+    CMDLINE+=(
+        root=PARTUUID="$(blkid -s PARTUUID -o value $BASE_DEVICE)"
+        rootfstype=btrfs
+        rootflags=subvol=$ROOT_SUBVOLUME
+        rootwait
+    )
 }
 
 mount-base-device() {
@@ -121,6 +126,10 @@ config-systemd() {
     chattr -V +C "$ROOT"/var/log/journal/
     chroot "$ROOT" systemd-machine-id-setup
     chroot "$ROOT" systemctl enable systemd-networkd systemd-resolved sshd
+    CMDLINE+=(
+        init=/lib/systemd/systemd
+        systemd.gpt_auto=no
+    )
 }
 
 config-ssh-access() {
@@ -149,6 +158,7 @@ set-root-password() {
 install-boot() {
     mount-boot-device
     install-kernel
+    install-kernel-cmdline
     install-boot-config
 }
 
@@ -157,23 +167,16 @@ mount-boot-device() {
     mount-dir "$BOOT_DEVICE" "$BOOT" "$BOOT_MOUNT_OPTS"
 }
 
+install-kernel-cmdline() {
+    milestone
+    local -r cmdline_file=cmdline-$INSTALL_VERSION.txt
+    echo '# $cmdline_file'
+    tee $BOOT/$cmdline_file <<<"${CMDLINE[*]}"
+    CONFIG+=(cmdline=$cmdline_file)
+}
+
 install-boot-config() {
     milestone
-    CMDLINE+=(
-        root=PARTUUID="$(blkid -s PARTUUID -o value $BASE_DEVICE)"
-        rootfstype=btrfs
-        rootflags=subvol=$ROOT_SUBVOLUME
-        rootwait
-        init=/lib/systemd/systemd
-        systemd.gpt_auto=no
-    )
-    local -r CONFIG=(
-        enable_uart=1
-    )
-    echo '# cmdline.txt'
-    tee $BOOT/cmdline.txt <<<"${CMDLINE[*]}"
-    echo
     echo '# config.txt'
     tee $BOOT/config.txt <<<"${CONFIG[*]}"
-    echo
 }
