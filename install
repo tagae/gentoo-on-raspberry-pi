@@ -32,7 +32,7 @@ see '$(realpath --relative-to="$(pwd)" $SCRIPT_DIR)/bootstrap -h'.
 
 Sample invocation:
 
-  sudo -E $0 gentoo rpi4 /dev/mmcblk0
+  sudo env SSH_AUTHORIZED_KEYS=$HOME/.ssh/openpgp-79131759.pub $0 gentoo rpi4 /dev/mmcblk0
 
 EOM
 }
