@@ -48,18 +48,10 @@ config-kernel() {
 }
 
 apply-kernel-config() {
-    local CONFIG_DIR="$1" CONFIG_NAME CONFIG_FILE
+    local CONFIG_DIR="$1"
     shift
-    rm -f $KERNEL_SRC/combined.config
-    while (( $# > 0 )); do
-        CONFIG_NAME="$1"
-        shift
-        CONFIG_FILE=$CONFIG_DIR/$CONFIG_NAME.linux.config
-        if [ -e $CONFIG_FILE ]; then
-            echo applying facet $CONFIG_NAME
-            cat $CONFIG_FILE >> $KERNEL_SRC/combined.config
-        fi
-    done
+    ( cd $CONFIG_DIR; realpath -eq ${@/%/.linux.config} | xargs cat ) | \
+        grep -Ev '^[[:space:]]*(#|$)' | sort | uniq > $KERNEL_SRC/combined.config
 }
 
 set-kernel-config() {
@@ -76,9 +68,14 @@ cross-make() {
     make --jobs $(nproc) -C $KERNEL_SRC ARCH=$CROSSDEV_ARCH CROSS_COMPILE=$CROSSDEV_TARGET- "$@"
 }
 
+kernel-image-name() {
+    local -r branch_and_config_hash=$(sha512sum <<<"$KERNEL_BRANCH $(<$KERNEL_SRC/combined.config)")
+    echo kernel-${branch_and_config_hash:0:12}.img
+}
+
 install-kernel-image() {
     milestone
-    local -r kernel_image_name=kernel-$INSTALL_VERSION.img
+    local -r kernel_image_name=$(kernel-image-name)
     cp -uv $BUILT_KERNEL/Image $BOOT/$kernel_image_name
     CONFIG+=(kernel=$kernel_image_name)
 }
