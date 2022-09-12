@@ -57,10 +57,13 @@ bind-portage-tree() {
 
 install-builder-packages() {
     milestone
-    emerge --noreplace \
-           sys-fs/btrfs-progs \
-           sys-fs/dosfstools \
-           dev-vcs/git \
-           sys-devel/bc \
+    mkdir -vp /etc/portage/sets
+    cat > /etc/portage/sets/builder <<-EOP
+           sys-fs/btrfs-progs
+           sys-fs/dosfstools
+           dev-vcs/git
+           sys-devel/bc
            dev-tcltk/expect
+EOP
+    emerge -u @builder
 }
