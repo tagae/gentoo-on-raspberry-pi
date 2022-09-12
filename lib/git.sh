@@ -7,6 +7,11 @@ current-branch() {
     git -C $REPO symbolic-ref --short HEAD
 }
 
+default-branch() {
+    local -r REPO_URL="$1"
+    git ls-remote --symref $REPO_URL HEAD | awk '/^ref:/ {print $2}'
+}
+
 fetch-branch() {
     local -r REPO_URL="$1"
     local -r BRANCH="$2"
