@@ -22,8 +22,6 @@ source "$LIB_DIR"/ui.sh
 : ${ROOT_MOUNT_OPTS:="compress=zstd,noatime"}
 : ${BOOT_MOUNT_OPTS:="noauto,noatime"}
 
-: ${INSTALL_VERSION=$(git-short-commit-hash)}
-
 CMDLINE=()
 CONFIG=()
 
@@ -73,7 +71,15 @@ install-root() {
 bootstrap-root() {
     milestone
     mount-base-device
-    ROOT_SUBVOLUME=/root-$INSTALL_VERSION
+    mkdir -vp $BASE/roots
+    if [ -d $BASE/roots/0 ]; then
+        local roots=( $BASE/roots/* )
+        local -i last_subvolume=${roots[-1]##$BASE/roots/}
+        ROOT_VERSION=$((last_subvolume++))
+    else
+        ROOT_VERSION=0
+    fi
+    ROOT_SUBVOLUME=/roots/$ROOT_VERSION
     ROOT=$BASE/$ROOT_SUBVOLUME
     env ARCH=arm64 ./bootstrap -q "$ROOT"
     CMDLINE+=(
@@ -169,7 +175,7 @@ mount-boot-device() {
 
 install-kernel-cmdline() {
     milestone
-    local -r cmdline_file=cmdline-$INSTALL_VERSION.txt
+    local -r cmdline_file=cmdline-$ROOT_VERSION.txt
     echo '# $cmdline_file'
     tee $BOOT/$cmdline_file <<<"${CMDLINE[*]}"
     CONFIG+=(cmdline=$cmdline_file)
