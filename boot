@@ -16,7 +16,6 @@ MEDIA can be generated with the 'package' command.
 Options:
 
   -h   print this help message
-  -d   run as daemon in the background
 
 Environment variables:
 
@@ -32,7 +31,6 @@ EOM
 while getopts :hd OPTION; do
     case $OPTION in
         h) usage ;;
-        d) DAEMON=true ;;
         \?) usage ;;
     esac
 done

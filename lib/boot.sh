@@ -20,6 +20,11 @@ mount-boot-partition() {
     mount-boot-device
 }
 
+config-value() {
+    local -r key="$1"
+    awk -F= '/'"$key"'=/ {print $2}' $BOOT/config.txt | grep . # fail if no match
+}
+
 boot-system() {
     milestone
     (
@@ -35,9 +40,8 @@ boot-system() {
             -smp 1 \
             -m 512 \
             -nographic \
-            ${DAEMON:+-daemonize} \
-            -kernel "$BOOT"/kernel*.img \
-            -append "$(< $BOOT/cmdline*.txt)" \
+            -kernel $BOOT/$(config-value kernel) \
+            -append "$(< $BOOT/$(config-value cmdline))" \
             "${QEMU_OPTS[@]}"
     )
 }
