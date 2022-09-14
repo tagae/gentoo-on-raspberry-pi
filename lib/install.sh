@@ -103,7 +103,11 @@ find-root-version() {
     if [ -d $BASE/roots/0 ]; then
         local roots=( $BASE/roots/* )
         local -i last_subvolume=${roots[-1]##$BASE/roots/}
-        ROOT_VERSION=$((last_subvolume + 1))
+        if ${CLEAN:-false}; then
+            ROOT_VERSION=$((last_subvolume + 1))
+        else
+            ROOT_VERSION=$last_subvolume
+        fi
     else
         ROOT_VERSION=0
     fi
