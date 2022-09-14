@@ -77,18 +77,17 @@ bootstrap-root() {
     local -r root_subvolume=/roots/$ROOT_VERSION
     ROOT=$BASE/$root_subvolume
     env ARCH=arm64 ./bootstrap -q "$ROOT"
-    local base_device_spec
-    base_device_uuid="UUID=$(blkid -s UUID -o value "$BASE_DEVICE")"
+    local base_device_uuid base_device_partuuidx
     base_device_partuuid="PARTUUID=$(blkid -s PARTUUID -o value "$BASE_DEVICE")"
-    local -r mnt_opts="subvol=$root_subvolume,$ROOT_MOUNT_OPTS"
+    base_device_uuid="UUID=$(blkid -s UUID -o value "$BASE_DEVICE")"
     CMDLINE+=(
         root=$base_device_partuuid
         rootfstype=btrfs
-        rootflags=$mnt_opts
+        rootflags=subvol=$root_subvolume
         rootwait
     )
     FSTAB+=(
-        "$base_device_uuid / btrfs $mnt_opts 0 0"
+        "$base_device_uuid / btrfs subvol=$root_subvolume,$ROOT_MOUNT_OPTS 0 0"
     )
 }
 
