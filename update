@@ -3,13 +3,13 @@
 readonly SCRIPT_NAME="$(basename "$0")"
 readonly SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 
-source "$SCRIPT_DIR"/lib/upgrade.sh
+source "$SCRIPT_DIR"/lib/update.sh
 
 usage() {
     die <<EOM
-Usage: $SCRIPT_NAME [OPTION]... PROFILE
+Usage: $SCRIPT_NAME [OPTION]... PROFILE DEVICE
 
-Upgrades the current Gentoo system according to PROFILE.
+Updates the current Gentoo system according to PROFILE.
 
 Options:
 
@@ -39,14 +39,24 @@ while getopts :hwqm OPTION; do
 done
 shift $((OPTIND-1))
 
-(( $# == 0 )) || usage
+(( $# == 2 )) || usage
+
+readonly MACHINE="$(hostname)"
+readonly PROFILE="$1"
+readonly DEVICE="$2"
+
+[ -n "$PROFILE" ] || die 'please specify a non-empty profile'
+[ -b "$DEVICE" ] || die "'$DEVICE' is not a block device"
+[ -f profiles/"$PROFILE".sh ] || die "unsupported profile '$PROFILE'"
+
+source profiles/"$PROFILE".sh
 
 cd "$SCRIPT_DIR"
 
-upgrade
+update
 
 ${QUIET:-false} || cat <<EOM
 
-Gentoo has been upgraded.
+Gentoo has been updated.
 
 EOM

@@ -1,0 +1,9 @@
+[Unit]
+Description=Moves tryboot.txt to config.txt after a successful boot
+After=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ConditionPathExists=/boot/tryboot.txt
+ExecStart=/bin/mv -v /boot/tryboot.txt /boot/config.txt

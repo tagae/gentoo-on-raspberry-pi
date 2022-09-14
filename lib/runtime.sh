@@ -2,6 +2,7 @@ test -v RUNTIME_LIB && return || readonly RUNTIME_LIB="$(realpath $BASH_SOURCE)"
 
 set -o nounset -o pipefail -o errexit -o errtrace -o functrace
 shopt -s inherit_errexit
+shopt -s nullglob
 
 if test -v DEBUG; then
    set -o xtrace

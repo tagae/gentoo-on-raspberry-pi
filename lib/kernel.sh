@@ -13,6 +13,8 @@ source "$LIB_DIR"/ui.sh
 install-kernel() {
     fetch-kernel
     build-kernel Image modules dtbs
+    KERNEL_HOME=$BOOT/$KERNEL_BRANCH
+    mkdir -vp $KERNEL_HOME
     install-kernel-image
     install-kernel-modules
     install-device-tree
@@ -76,7 +78,7 @@ kernel-image-name() {
 install-kernel-image() {
     milestone
     local -r kernel_image_name=$(kernel-image-name)
-    cp -uv $BUILT_KERNEL/Image $BOOT/$kernel_image_name
+    cp -uv $BUILT_KERNEL/Image $KERNEL_HOME/$kernel_image_name
     CONFIG+=(kernel=$kernel_image_name)
 }
 
@@ -88,15 +90,16 @@ install-kernel-modules() {
 install-device-tree() {
     [ -v DEVICE_TREE ] || return 0
     milestone
-    cp -uv $BUILT_KERNEL/dts/$DEVICE_TREE $BOOT/
+    cp -uv $BUILT_KERNEL/dts/$DEVICE_TREE $KERNEL_HOME
 }
 
 install-overlays() {
     milestone
-    mkdir -pv $BOOT/overlays
-    cp -uv $BUILT_KERNEL/dts/overlays/README $BOOT/overlays/
+    local -r overlays_dir=$KERNEL_HOME/overlays/
+    mkdir -pv $overlays_dir
+    cp -uv $BUILT_KERNEL/dts/overlays/README $overlays_dir
     if [ -v OVERLAYS ]; then
-        cp -uv $BUILT_KERNEL/dts/overlays/{$OVERLAYS}.dtbo $BOOT/overlays/
+        cp -uv $BUILT_KERNEL/dts/overlays/{$OVERLAYS}.dtbo $overlays_dir
     fi
 }
 

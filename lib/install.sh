@@ -22,10 +22,11 @@ source "$LIB_DIR"/ui.sh
 : ${ROOT_MOUNT_OPTS:="compress=zstd,noatime"}
 : ${BOOT_MOUNT_OPTS:="noauto,noatime"}
 
-FSTAB=()
-CMDLINE=()
-CONFIG=(
-    arm_64bit=1
+CONFIG=(arm_64bit=1)
+CMDLINE=(init=/lib/systemd/systemd)
+SUBVOLUMES=(
+    /var
+    /home
 )
 
 install() {
@@ -36,6 +37,7 @@ install() {
         find-partitions
         create-file-systems
     fi
+    install-base
     install-root
     install-boot
     config-fstab
@@ -63,9 +65,21 @@ create-file-systems() {
     ( set -x; mkfs.btrfs -L base "$BASE_DEVICE"; )
 }
 
-install-root() {
+install-base() {
     mount-base-device
-    find-root-version
+    for subvol in "${SUBVOLUMES[@]}"; do
+        create-subvolume $BASE/$subvol
+    done
+}
+
+mount-base-device() {
+    BASE=$(make-temp-dir)
+    mount-dir "$BASE_DEVICE" "$BASE" "$BASE_MOUNT_OPTS"
+}
+
+install-root() {
+    define-root
+    mount-data-subvolumes
     bootstrap-root
     crossdev-unneeded || enable-emulation
     provision-files
@@ -74,43 +88,36 @@ install-root() {
     set-root-password
 }
 
-bootstrap-root() {
-    milestone
-    local -r root_subvolume=/roots/$ROOT_VERSION
-    ROOT=$BASE/$root_subvolume
-    env ARCH=arm64 ./bootstrap -q "$ROOT"
-    local base_device_uuid base_device_partuuidx
-    base_device_partuuid="PARTUUID=$(blkid -s PARTUUID -o value "$BASE_DEVICE")"
-    base_device_uuid="UUID=$(blkid -s UUID -o value "$BASE_DEVICE")"
+define-root() {
+    mkdir -vp $BASE/root
+    ROOT_VERSION="$(date +%Y-%m-%d-%H-%M-%S)"
+    ROOT_SUBVOLUME=/root/$ROOT_VERSION
+    ROOT=$BASE/$ROOT_SUBVOLUME
     CMDLINE+=(
-        root=$base_device_partuuid
+        root="PARTUUID=$(blkid -s PARTUUID -o value "$BASE_DEVICE")"
         rootfstype=btrfs
-        rootflags=subvol=$root_subvolume
+        rootflags=subvol=$ROOT_SUBVOLUME
         rootwait
     )
-    FSTAB+=(
-        "$base_device_uuid / btrfs subvol=$root_subvolume,$ROOT_MOUNT_OPTS 0 0"
-    )
-}
-
-mount-base-device() {
-    BASE=$(make-temp-dir)
-    mount-dir "$BASE_DEVICE" "$BASE" "$BASE_MOUNT_OPTS"
-}
-
-find-root-version() {
-    mkdir -vp $BASE/roots
-    if [ -d $BASE/roots/0 ]; then
-        local roots=( $BASE/roots/* )
-        local -i last_subvolume=${roots[-1]##$BASE/roots/}
-        if ${CLEAN:-false}; then
-            ROOT_VERSION=$((last_subvolume + 1))
-        else
-            ROOT_VERSION=$last_subvolume
-        fi
+    local -r roots=( $BASE/root/* )
+    if (( ${#roots[@]} == 0 )) || ${CLEAN:-false}; then
+        create-subvolume $ROOT
     else
-        ROOT_VERSION=0
+        snapshot-subvolume ${roots[-1]} $ROOT
     fi
+}
+
+mount-data-subvolumes() {
+    for subvol in "${SUBVOLUMES[@]}"; do
+        mkdir -pv $ROOT/$subvol
+        touch $ROOT/$subvol/.keep
+        mount-dir $BASE_DEVICE $ROOT/$subvol subvol=$subvol
+    done
+}
+
+bootstrap-root() {
+    milestone
+    env ARCH=arm64 ./bootstrap -q "$ROOT"
 }
 
 enable-emulation() {
@@ -134,10 +141,6 @@ config-systemd() {
     chattr -V +C "$ROOT"/var/log/journal/
     chroot "$ROOT" systemd-machine-id-setup
     chroot "$ROOT" systemctl enable systemd-networkd systemd-resolved sshd
-    CMDLINE+=(
-        init=/lib/systemd/systemd
-        systemd.gpt_auto=no
-    )
 }
 
 config-ssh-access() {
@@ -165,9 +168,6 @@ set-root-password() {
 
 install-boot() {
     mount-boot-device
-    local boot_device_spec
-    boot_device_spec="UUID=$(blkid -s UUID -o value "$BOOT_DEVICE")"
-    FSTAB+=("$boot_device_spec /boot vfat $BOOT_MOUNT_OPTS 1 2")
     install-kernel
     install-kernel-cmdline
     install-boot-config
@@ -181,20 +181,34 @@ mount-boot-device() {
 install-kernel-cmdline() {
     milestone
     local -r cmdline_file=cmdline-$ROOT_VERSION.txt
-    echo '# $cmdline_file'
-    tee $BOOT/$cmdline_file <<<"${CMDLINE[@]}"
+    echo "# $cmdline_file"
+    tee $KERNEL_HOME/$cmdline_file <<<"${CMDLINE[@]}"
     CONFIG+=(cmdline=$cmdline_file)
 }
 
 install-boot-config() {
     milestone
-    echo '# config.txt'
-    ( IFS=$'\n'; tee $BOOT/config.txt <<<"${CONFIG[*]}" )
+    CONFIG+=(os_prefix=$KERNEL_BRANCH/)
+    local config_file=$BOOT/config.txt
+    if test -f $BOOT/config.txt; then
+        config_file=$BOOT/tryboot.txt
+    fi
+    echo "# $config_file"
+    ( IFS=$'\n'; tee $config_file <<<"${CONFIG[*]}" )
 }
 
 config-fstab() {
     milestone
+    local boot_dev_spec base_dev_spec
+    boot_dev_spec="UUID=$(blkid -s UUID -o value "$BOOT_DEVICE")"
+    base_dev_spec="UUID=$(blkid -s UUID -o value "$BASE_DEVICE")"
+    local -r fstab=(
+        "$boot_dev_spec /boot vfat  $BOOT_MOUNT_OPTS 0 2"
+        "$base_dev_spec /     btrfs subvol=$ROOT_SUBVOLUME,$ROOT_MOUNT_OPTS 0 1"
+        "$base_dev_spec /var  btrfs subvol=/var,noatime,nodev,nosuid 0 2"
+        "$base_dev_spec /home btrfs subvol=/home,noatime,nodev,nosuid 0 2"
+    )
     grep -E '^(#|$)' $ROOT/etc/fstab > $ROOT/etc/fstab.new
-    ( IFS=$'\n'; tee --append $ROOT/etc/fstab.new <<<"${FSTAB[*]}" )
+    ( IFS=$'\n'; tee --append $ROOT/etc/fstab.new <<<"${fstab[*]}" )
     mv $ROOT/etc/fstab.new $ROOT/etc/fstab
 }
