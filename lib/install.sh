@@ -24,7 +24,9 @@ source "$LIB_DIR"/ui.sh
 
 FSTAB=()
 CMDLINE=()
-CONFIG=()
+CONFIG=(
+    arm_64bit=1
+)
 
 install() {
     source-from install.d/facets ${FACETS:-}
