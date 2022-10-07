@@ -27,6 +27,7 @@ config-value() {
 
 boot-system() {
     milestone
+    local -r boot_dir=$BOOT/$(config-value os_prefix)
     (
         set -x
 
@@ -40,8 +41,8 @@ boot-system() {
             -smp 1 \
             -m 512 \
             -nographic \
-            -kernel $BOOT/$(config-value kernel) \
-            -append "$(< $BOOT/$(config-value cmdline))" \
+            -kernel $boot_dir/$(config-value kernel) \
+            -append "$(< $boot_dir/$(config-value cmdline))" \
             "${QEMU_OPTS[@]}"
     )
 }
