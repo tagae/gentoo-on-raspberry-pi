@@ -32,16 +32,3 @@ fetch-branch() {
         git clone --branch $BRANCH --depth 1 $REPO_URL $REPO
     fi
 }
-
-git-repo-is-clean() {
-    local -r REPO="$1"
-    git -C $REPO diff-index --quiet HEAD --
-}
-
-git-short-commit-hash() {
-    local -r REPO="${1:-$LIB_DIR}"
-    local hash suffix
-    hash="$(git -C $REPO rev-parse --short HEAD)"
-    git-repo-is-clean $REPO || suffix="-dirty"
-    echo $hash$suffix
-}
