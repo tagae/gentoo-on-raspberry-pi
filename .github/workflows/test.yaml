@@ -36,7 +36,7 @@ jobs:
         key: builder-${{ hashFiles('builder', 'lib/builder.sh', 'provision', 'lib/provision.sh', 'provision.d') }}
 
     - name: Provision builder
-      run: sudo ./builder ./provision
+      run: attempts=0; while (( attempts < 3 )) && ! sudo ./builder ./provision; do (( attempts++ )); done
 
     - name: Build image
       run: sudo --preserve-env=PASSWORD ./builder ./package gentoo.test.img
