@@ -190,7 +190,7 @@ install-boot-config() {
     milestone
     CONFIG+=(os_prefix=$KERNEL_BRANCH/)
     local config_file=$BOOT/config.txt
-    if test -f $BOOT/config.txt; then
+    if test -f $BOOT/config.txt-disabled; then
         config_file=$BOOT/tryboot.txt
     fi
     echo "# $config_file"
